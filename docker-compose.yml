@@ -1,0 +1,61 @@
+name: chatvardage-c2
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: chatvardage-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_SUPERUSER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_SUPERPASS:-postgres}
+      POSTGRES_DB: postgres
+      AUTH_DB: ${AUTH_DB:-chatvardage_auth}
+      ROOMS_DB: ${ROOMS_DB:-chatvardage_rooms}
+      MESSAGES_DB: ${MESSAGES_DB:-chatvardage_messages}
+      CONFIG_DB: ${CONFIG_DB:-chatvardage_config}
+      AUTH_DB_USER: ${AUTH_DB_USER:-auth_service}
+      AUTH_DB_PASSWORD: ${AUTH_DB_PASSWORD:-auth_service_dev}
+      ROOMS_DB_USER: ${ROOMS_DB_USER:-room_service}
+      ROOMS_DB_PASSWORD: ${ROOMS_DB_PASSWORD:-room_service_dev}
+      MESSAGES_DB_USER: ${MESSAGES_DB_USER:-message_service}
+      MESSAGES_DB_PASSWORD: ${MESSAGES_DB_PASSWORD:-message_service_dev}
+      CONFIG_DB_USER: ${CONFIG_DB_USER:-config_service}
+      CONFIG_DB_PASSWORD: ${CONFIG_DB_PASSWORD:-config_service_dev}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_SUPERUSER:-postgres} -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    networks: [chatvardage]
+
+  redis:
+    image: redis:7.4-alpine
+    container_name: chatvardage-redis
+    restart: unless-stopped
+    command: ["sh", "-c", "exec redis-server --appendonly yes --requirepass '$${REDIS_PASSWORD}'"]
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-chatvardage_redis_dev}
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a '$${REDIS_PASSWORD}' ping | grep PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+    networks: [chatvardage]
+
+networks:
+  chatvardage:
+    name: chatvardage-network
+
+volumes:
+  postgres_data:
+  redis_data:
