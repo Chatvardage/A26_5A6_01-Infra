@@ -6,11 +6,30 @@ create_role_and_db() {
   user="$2"
   pass="$3"
 
+  if [ -z "$db" ]; then
+    echo "Nom de base vide" >&2
+    exit 1
+  fi
+
+  if [ -z "$user" ]; then
+    echo "Nom de rôle vide" >&2
+    exit 1
+  fi
+
   # Les identifiants SQL ne peuvent contenir que lettres, chiffres et underscore.
-  [ -n "$db" ] || { echo "Nom de base vide" >&2; exit 1; }
-  [ -n "$user" ] || { echo "Nom de role vide" >&2; exit 1; }
-  case "$db" in *[!A-Za-z0-9_]*) echo "Nom de base invalide: $db" >&2; exit 1 ;; esac
-  case "$user" in *[!A-Za-z0-9_]*) echo "Nom de rôle invalide: $user" >&2; exit 1 ;; esac
+  case "$db" in
+    *[!A-Za-z0-9_]*)
+      echo "Nom de base invalide: $db" >&2
+      exit 1
+      ;;
+  esac
+
+  case "$user" in
+    *[!A-Za-z0-9_]*)
+      echo "Nom de rôle invalide: $user" >&2
+      exit 1
+      ;;
+  esac
 
   # Échapper les apostrophes du mot de passe avant de l'insérer comme littéral SQL.
   escaped_pass=$(printf "%s" "$pass" | sed "s/'/''/g")

@@ -1,11 +1,19 @@
 #!/bin/sh
+
 set -eu
 
-printf "Cela va supprimer tous les volumes (donnees perdues). Continuer ? [y/N] "
+printf 'ATTENTION : cette commande va supprimer tous les volumes Docker et donc les données locales.\n'
+printf 'Continuer ? [y/N] '
+
 read -r ans
+
 case "$ans" in
-  [yY]) ;;
-  *) echo "Annule."; exit 0 ;;
+  [yY])
+    ;;
+  *)
+    echo "Annulé."
+    exit 0
+    ;;
 esac
 
 docker compose down -v --remove-orphans
