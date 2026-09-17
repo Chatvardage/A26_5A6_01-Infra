@@ -110,39 +110,10 @@ services:
       DATABASE_URL: >-
         postgresql://${AUTH_DB_USER:-auth_service}:${AUTH_DB_PASSWORD:-auth_service_dev}@postgres:5432/${AUTH_DB:-chatvardage_auth}
 
-      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET doit etre defini dans le fichier .env}
-      JWT_DUREE_DE_VIE_HEURES: ${JWT_DUREE_DE_VIE_HEURES:-24}
-      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173}
-      RUST_LOG: ${RUST_LOG:-info}
-
-    ports:
-      - "127.0.0.1:3001:3001"
-
-    depends_on:
-      postgres:
-        condition: service_healthy
-
-    networks:
-      - chatvardage
-
-  auth-service:
-    build:
-      context: ../A26_5A6_01-Authentification
-      dockerfile: Dockerfile
-
-    container_name: chatvardage-auth-service
-    restart: unless-stopped
-
-    environment:
-      PORT: 3001
-
-      DATABASE_URL: >-
-        postgresql://${AUTH_DB_USER:-auth_service}:${AUTH_DB_PASSWORD:-auth_service_dev}@postgres:5432/${AUTH_DB:-chatvardage_auth}
-
       JWT_SECRET: ${JWT_SECRET:-dev_secret_change_me_before_prod}
       JWT_DUREE_DE_VIE_HEURES: ${JWT_DUREE_DE_VIE_HEURES:-24}
       RUST_LOG: ${RUST_LOG:-info}
-      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173}
 
     ports:
       - "3001:3001"
@@ -151,9 +122,19 @@ services:
       postgres:
         condition: service_healthy
 
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -fs http://localhost:3001/health || exit 1"
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 15s
+
     networks:
       - chatvardage
-
 
   room-service:
     build:
@@ -170,6 +151,7 @@ services:
         postgresql://${ROOMS_DB_USER:-room_service}:${ROOMS_DB_PASSWORD:-room_service_dev}@postgres:5432/${ROOMS_DB:-chatvardage_rooms}?schema=public
 
       AUTH_SERVICE_URL: http://auth-service:3001
+      AUTH_SERVICE_TIMEOUT_MS: ${AUTH_SERVICE_TIMEOUT_MS:-3000}
 
     ports:
       - "127.0.0.1:3003:3003"

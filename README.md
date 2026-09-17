@@ -85,3 +85,10 @@ Pour le C2, PostgreSQL reste la source de vérité. Redis/WebSocket servent au t
 Le Compose global démarre `auth-service` (3001) avant `room-service` et `message-service`. Rooms et Messages reçoivent le JWT du client puis valident la session courante auprès de `http://auth-service:3001/api/auth/me`. Le rôle reste la propriété du service Auth et n'est pas recopié dans le JWT.
 
 Au premier démarrage sur un volume vide, Infra crée les bases/rôles PostgreSQL. Chaque service exécute ensuite ses propres migrations au démarrage de son conteneur.
+
+## Accéder à l'interface BD
+- Se rendre sur http://localhost:8080 (Dashboard)
+- Utiliser "postgres" comme serveur
+- Utiliser "postgres" comme utilisateur
+- Utiliser "postgres" comme mot de passe
+- Sélectionner la base souhaitée dans le menu déroulant (ou laisser vide pour voir toutes les bases)

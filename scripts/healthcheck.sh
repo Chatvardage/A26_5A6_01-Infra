@@ -2,10 +2,10 @@
 set -eu
 
 echo "== PostgreSQL =="
-docker compose exec -T postgres pg_isready -U postgres -d postgres
+docker compose exec -T postgres pg_isready -U "${POSTGRES_SUPERUSER:-postgres}" -d postgres
 
 echo "== Databases =="
-docker compose exec -T postgres psql -U postgres -d postgres -Atc "SELECT datname FROM pg_database WHERE datname LIKE 'chatvardage_%' ORDER BY datname;"
+docker compose exec -T postgres psql -U "${POSTGRES_SUPERUSER:-postgres}" -d postgres -Atc "SELECT datname FROM pg_database WHERE datname LIKE 'chatvardage_%' ORDER BY datname;"
 
 echo "== Redis =="
 docker compose exec -T -e REDISCLI_AUTH="${REDIS_PASSWORD:-chatvardage_redis_dev}" redis redis-cli ping
