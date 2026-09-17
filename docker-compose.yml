@@ -140,6 +140,7 @@ services:
         postgresql://${ROOMS_DB_USER:-room_service}:${ROOMS_DB_PASSWORD:-room_service_dev}@postgres:5432/${ROOMS_DB:-chatvardage_rooms}?schema=public
 
       AUTH_SERVICE_URL: http://auth-service:3001
+      AUTH_SERVICE_TIMEOUT_MS: ${AUTH_SERVICE_TIMEOUT_MS:-3000}
 
     ports:
       - "127.0.0.1:3003:3003"
