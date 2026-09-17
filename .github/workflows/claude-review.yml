@@ -11,6 +11,8 @@ permissions:
 jobs:
   claude-review:
     runs-on: ubuntu-latest
+    outputs:
+      fallback_required: ${{ steps.review.outputs.fallback_required }}
 
     steps:
       - name: Checkout code
@@ -22,18 +24,24 @@ jobs:
         run: npm install -g @anthropic-ai/claude-code
 
       - name: Run Claude review
+        id: review
         env:
           ANTHROPIC_MODEL: claude-sonnet-4-6
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git diff "${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }}" > /tmp/diff.txt
-          claude --print "Review this git diff for code quality, bugs, performance, and security issues. Format your feedback as clean markdown comments referencing the files. Check API.md, AGENTS.md, README.md, and anything in /docs for reference. Formulate your review in French." < /tmp/diff.txt > /tmp/review.md
-          gh pr comment "${{ github.event.pull_request.number }}" --body-file /tmp/review.md
+          if claude --print "Review this git diff for code quality, bugs, performance, and security issues. Format your feedback as clean markdown comments referencing the files. Check API.md, AGENTS.md, README.md, and anything in /docs for reference. Formulate your review in French." < /tmp/diff.txt > /tmp/review.md && test -s /tmp/review.md; then
+            gh pr comment "${{ github.event.pull_request.number }}" --body-file /tmp/review.md
+            echo "fallback_required=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::Claude review failed; starting the Copilot fallback."
+            echo "fallback_required=true" >> "$GITHUB_OUTPUT"
+          fi
 
   copilot-fallback-review:
     needs: claude-review
-    if: ${{ always() && needs.claude-review.result == 'failure' }}
+    if: ${{ needs.claude-review.outputs.fallback_required == 'true' }}
     runs-on: ubuntu-latest
 
     steps:
@@ -55,7 +63,7 @@ jobs:
           GH_TOKEN: ${{ secrets.COPILOT_REVIEW_TOKEN }}
         run: |
           git diff "${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }}" > /tmp/diff.txt
-          copilot -p "Review this git diff for code quality, bugs, performance, and security issues. Return only a concise Markdown review in French, with filenames and line references where applicable. Do not modify files or call GitHub APIs." < /tmp/diff.txt > /tmp/review.md
+          copilot --silent --stream off --disable-builtin-mcps --available-tools= -p "Review this git diff for code quality, bugs, performance, and security issues. Format your feedback as clean markdown comments referencing the files. Check the API.md, AGENTS.md, README.md and anything in /docs for reference. Formulate your review in french. Do not explain your process, use tools, modify files, or call GitHub APIs." < /tmp/diff.txt > /tmp/review.md
           test -s /tmp/review.md
 
       - name: Post Copilot review
