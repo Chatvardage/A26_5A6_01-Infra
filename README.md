@@ -70,3 +70,10 @@ Cela supprime les volumes PostgreSQL/Redis et recrée les quatre bases vides. Le
 **Infra crée les bases et les comptes SQL. Les microservices créent et font évoluer leurs tables.** Il ne faut pas dupliquer les schémas ou migrations dans Infra.
 
 Pour le C2, PostgreSQL reste la source de vérité. Redis/WebSocket servent au temps réel des messages privés après une écriture réussie en base. Les messages de salons restent hors de la persistance C2.
+
+
+## Authentification intégrée
+
+Le Compose global démarre `auth-service` (3001) avant `room-service` et `message-service`. Rooms et Messages reçoivent le JWT du client puis valident la session courante auprès de `http://auth-service:3001/api/auth/me`. Le rôle reste la propriété du service Auth et n'est pas recopié dans le JWT.
+
+Au premier démarrage sur un volume vide, Infra crée les bases/rôles PostgreSQL. Chaque service exécute ensuite ses propres migrations au démarrage de son conteneur.

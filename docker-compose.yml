@@ -98,6 +98,28 @@ services:
       - chatvardage
 
 
+  auth-service:
+    build:
+      context: ../A26_5A6_01-Authentification
+      dockerfile: Dockerfile
+    container_name: chatvardage-auth-service
+    restart: unless-stopped
+    environment:
+      PORT: 3001
+      DATABASE_URL: >-
+        postgresql://${AUTH_DB_USER:-auth_service}:${AUTH_DB_PASSWORD:-auth_service_dev}@postgres:5432/${AUTH_DB:-chatvardage_auth}
+      JWT_SECRET: ${JWT_SECRET:-change-me-minimum-32-characters-long}
+      JWT_DUREE_DE_VIE_HEURES: ${JWT_DUREE_DE_VIE_HEURES:-24}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173}
+      RUST_LOG: ${RUST_LOG:-info}
+    ports:
+      - "3001:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - chatvardage
+
   room-service:
     build:
       context: ../A26_5A6_01-Room-Service
@@ -111,12 +133,15 @@ services:
 
       DATABASE_URL: >-
         postgresql://${ROOMS_DB_USER:-room_service}:${ROOMS_DB_PASSWORD:-room_service_dev}@postgres:5432/${ROOMS_DB:-chatvardage_rooms}?schema=public
+      AUTH_SERVICE_URL: http://auth-service:3001
 
     ports:
       - "3003:3003"
 
     depends_on:
       postgres:
+        condition: service_healthy
+      auth-service:
         condition: service_healthy
 
     networks:
@@ -138,7 +163,7 @@ services:
         postgresql://${MESSAGES_DB_USER:-message_service}:${MESSAGES_DB_PASSWORD:-message_service_dev}@postgres:5432/${MESSAGES_DB:-chatvardage_messages}?schema=public
 
       REDIS_URL: redis://:${REDIS_PASSWORD:-chatvardage_redis_dev}@redis:6379
-      JWT_SECRET: ${JWT_SECRET:-change-me-minimum-32-characters-long}
+      AUTH_SERVICE_URL: http://auth-service:3001
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
 
     ports:
@@ -148,6 +173,8 @@ services:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      auth-service:
         condition: service_healthy
 
     networks:
