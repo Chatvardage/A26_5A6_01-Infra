@@ -2,11 +2,10 @@
 
 Infrastructure Docker du Contrôle 2. Ce dépôt fournit **PostgreSQL, Redis, les bases logiques, les utilisateurs SQL, les volumes et le réseau Docker**. Il ne crée aucune table métier : chaque microservice est propriétaire de son schéma et de ses migrations.
 
-#
-
 
 ## Démarrage
 Prérequis : Docker + Docker Compose uniquement.
+Le healthcheck d’Auth-Service est défini dans son `Dockerfile`; Room-Service possède aussi un healthcheck dans ce Compose.
 
 ```bash
 cp .env.example .env
@@ -29,6 +28,8 @@ Depuis un service lancé **dans Docker** :
 - Message : `postgresql://message_service:message_service_dev@postgres:5432/chatvardage_messages`
 - Config : `postgresql://config_service:config_service_dev@postgres:5432/chatvardage_config`
 - Redis : `redis://:chatvardage_redis_dev@redis:6379`
+
+Les ports PostgreSQL (`5432`) et Redis (`6379`) sont liés à `127.0.0.1` uniquement : ils restent accessibles aux outils locaux, mais ne sont pas exposés aux autres machines du réseau.
 
 Depuis un service lancé **sur la machine hôte**, remplacer `postgres` par `localhost`. Exemple Room-Service :
 
