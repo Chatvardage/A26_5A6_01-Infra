@@ -98,6 +98,25 @@ services:
       - chatvardage
 
 
+  adminer:
+    image: adminer:4
+    container_name: chatvardage-adminer
+    restart: unless-stopped
+
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+
+    ports:
+      - "8080:8080"
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    networks:
+      - chatvardage
+
+
   room-service:
     build:
       context: ../A26_5A6_01-Room-Service

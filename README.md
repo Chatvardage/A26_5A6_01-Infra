@@ -11,6 +11,21 @@ docker compose up -d
 docker compose ps
 ```
 
+Adminer est disponible sur <http://localhost:8080>. Utiliser `postgres` comme
+serveur (pas `localhost` depuis Adminer), puis sélectionner la base et le
+compte du microservice concerné :
+
+| Base | Utilisateur | Mot de passe de développement |
+|---|---|---|
+| `chatvardage_auth` | `auth_service` | `auth_service_dev` |
+| `chatvardage_rooms` | `room_service` | `room_service_dev` |
+| `chatvardage_messages` | `message_service` | `message_service_dev` |
+| `chatvardage_config` | `config_service` | `config_service_dev` |
+
+Le compte superutilisateur PostgreSQL est `postgres` / `postgres` par défaut,
+mais son mot de passe est fixé uniquement lors de la création initiale du
+volume.
+
 Au premier démarrage, PostgreSQL crée automatiquement :
 - `chatvardage_auth`, propriétaire `auth_service`
 - `chatvardage_rooms`, propriétaire `room_service`
@@ -52,6 +67,22 @@ npm run start:dev
 ./scripts/reset.sh
 ```
 Cela supprime les volumes PostgreSQL/Redis et recrée les quatre bases vides. Les migrations des microservices doivent ensuite être réappliquées.
+
+Si PostgreSQL affiche `password authentication failed` après un changement de
+mot de passe dans `.env`, le volume contient encore l'ancien mot de passe.
+Pour repartir avec les identifiants de `.env` (cela efface les données locales) :
+
+```bash
+docker compose down -v
+docker compose up -d
+```
+
+Les bases créées par Infra sont vides : Adminer n'affichera des tables qu'après
+que le microservice concerné a exécuté ses migrations, par exemple :
+
+```bash
+npx prisma migrate deploy
+```
 
 ## Architecture des repos
 - Frontend : Electron + ChatGateway réel
