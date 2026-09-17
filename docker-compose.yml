@@ -50,6 +50,18 @@ services:
       - chatvardage
 
 
+  adminer:
+    image: adminer:latest
+    container_name: chatvardage-adminer
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - chatvardage
+
   redis:
     image: redis:7.4-alpine
     container_name: chatvardage-redis
@@ -60,7 +72,7 @@ services:
       - --appendonly
       - "yes"
       - --requirepass
-      - chatvardage_redis_dev
+      - ${REDIS_PASSWORD:-chatvardage_redis_dev}
 
     ports:
       - "6379:6379"
@@ -74,32 +86,13 @@ services:
           "CMD",
           "redis-cli",
           "-a",
-          "chatvardage_redis_dev",
+          "${REDIS_PASSWORD:-chatvardage_redis_dev}",
           "ping"
         ]
       interval: 5s
       timeout: 3s
       retries: 20
       start_period: 5s
-
-    networks:
-      - chatvardage
-
-
-  adminer:
-    image: adminer:4
-    container_name: chatvardage-adminer
-    restart: unless-stopped
-
-    environment:
-      ADMINER_DEFAULT_SERVER: postgres
-
-    ports:
-      - "8080:8080"
-
-    depends_on:
-      postgres:
-        condition: service_healthy
 
     networks:
       - chatvardage
@@ -144,7 +137,9 @@ services:
       DATABASE_URL: >-
         postgresql://${MESSAGES_DB_USER:-message_service}:${MESSAGES_DB_PASSWORD:-message_service_dev}@postgres:5432/${MESSAGES_DB:-chatvardage_messages}?schema=public
 
-      REDIS_URL: redis://:chatvardage_redis_dev@redis:6379
+      REDIS_URL: redis://:${REDIS_PASSWORD:-chatvardage_redis_dev}@redis:6379
+      JWT_SECRET: ${JWT_SECRET:-change-me-minimum-32-characters-long}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
 
     ports:
       - "3004:3004"
