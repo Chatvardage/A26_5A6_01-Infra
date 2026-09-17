@@ -50,6 +50,18 @@ services:
       - chatvardage
 
 
+  adminer:
+    image: adminer:latest
+    environment:
+      POSTGRES_USER: ${POSTGRES_SUPERUSER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_SUPERPASS:-postgres}
+    container_name: chatvardage-adminer
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    networks:
+      - chatvardage
+
   redis:
     image: redis:7.4-alpine
     container_name: chatvardage-redis
