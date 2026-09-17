@@ -51,6 +51,13 @@ npm run start:dev
 
 `prisma migrate deploy` doit créer les tables Rooms dans une base initialement vide. Infra ne doit jamais précréer `Room`, `RoomMember` ou `RoomInvitation`.
 
+## Tester avec Authentification
+```bash
+docker compose up -d
+curl http://localhost:3001/health
+# Ensuite, vous pouvez tester les endpoints d'authentification avec Postman ou curl (voir README du service Authentification).
+```
+
 ## Réinitialiser l'environnement
 ```bash
 ./scripts/reset.sh
