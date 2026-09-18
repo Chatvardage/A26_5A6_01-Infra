@@ -9,7 +9,7 @@ Le healthcheck d’Auth-Service est défini dans son `Dockerfile`; Room-Service 
 
 ```bash
 cp .env.example .env
-docker compose up -d
+docker compose up --build -d
 docker compose ps
 ```
 
@@ -83,6 +83,8 @@ Pour le C2, PostgreSQL reste la source de vérité. Redis/WebSocket servent au t
 ## Authentification intégrée
 
 Le Compose global démarre `auth-service` (3001) avant `room-service` et `message-service`. Rooms et Messages reçoivent le JWT du client puis valident la session courante auprès de `http://auth-service:3001/api/auth/me`. Le rôle reste la propriété du service Auth et n'est pas recopié dans le JWT.
+
+Pour l’environnement Docker local du contrôle, `room-service` est explicitement lancé avec `NODE_ENV=development`. Cela autorise l’URL HTTP interne `http://auth-service:3001` sur le réseau Docker privé. En production réelle, Room-Service conserve sa validation qui exige HTTPS. Le délai Room-Service est fourni avec `AUTH_TIMEOUT_MS`; Message-Service utilise `AUTH_SERVICE_TIMEOUT_MS`.
 
 Au premier démarrage sur un volume vide, Infra crée les bases/rôles PostgreSQL. Chaque service exécute ensuite ses propres migrations au démarrage de son conteneur.
 
