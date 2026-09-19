@@ -90,6 +90,7 @@ Au premier démarrage sur un volume vide, Infra crée les bases/rôles PostgreSQ
 
 ## Accéder à l'interface BD
 - Se rendre sur http://localhost:8080 (Dashboard)
+- Utiliser "PostgreSQL" comme type de base
 - Utiliser "postgres" comme serveur
 - Utiliser "postgres" comme utilisateur
 - Utiliser "postgres" comme mot de passe

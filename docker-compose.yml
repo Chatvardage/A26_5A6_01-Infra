@@ -223,6 +223,47 @@ services:
     networks:
       - chatvardage
 
+  user-config-service:
+    build:
+      context: ../A26_5A6_01-User-Config-Service
+      dockerfile: Dockerfile
+
+    container_name: chatvardage-user-config-service
+    restart: unless-stopped
+
+    environment:
+      PORT: 3005
+
+      DATABASE_URL: >-
+        postgresql://${CONFIG_DB_USER:-config_service}:${CONFIG_DB_PASSWORD:-config_service_dev}@postgres:5432/${CONFIG_DB:-chatvardage_config}?schema=public
+
+      AUTH_SERVICE_URL: http://auth-service:3001
+      AUTH_SERVICE_TIMEOUT_MS: ${AUTH_SERVICE_TIMEOUT_MS:-3000}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
+
+    ports:
+      - "127.0.0.1:3005:3005"
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"fetch('http://localhost:3005/api/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))\""
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+
+    networks:
+      - chatvardage
+
 networks:
   chatvardage:
     name: chatvardage-network
