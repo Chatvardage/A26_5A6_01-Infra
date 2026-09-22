@@ -1,0 +1,334 @@
+name: chatvardage-c2
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: chatvardage-postgres
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_USER: ${POSTGRES_SUPERUSER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_SUPERPASS:-postgres}
+      POSTGRES_DB: postgres
+
+      AUTH_DB: ${AUTH_DB:-chatvardage_auth}
+      ROOMS_DB: ${ROOMS_DB:-chatvardage_rooms}
+      MESSAGES_DB: ${MESSAGES_DB:-chatvardage_messages}
+      CONFIG_DB: ${CONFIG_DB:-chatvardage_config}
+
+      AUTH_DB_USER: ${AUTH_DB_USER:-auth_service}
+      AUTH_DB_PASSWORD: ${AUTH_DB_PASSWORD:-auth_service_dev}
+
+      ROOMS_DB_USER: ${ROOMS_DB_USER:-room_service}
+      ROOMS_DB_PASSWORD: ${ROOMS_DB_PASSWORD:-room_service_dev}
+
+      MESSAGES_DB_USER: ${MESSAGES_DB_USER:-message_service}
+      MESSAGES_DB_PASSWORD: ${MESSAGES_DB_PASSWORD:-message_service_dev}
+
+      CONFIG_DB_USER: ${CONFIG_DB_USER:-config_service}
+      CONFIG_DB_PASSWORD: ${CONFIG_DB_PASSWORD:-config_service_dev}
+
+    ports:
+      - "127.0.0.1:5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_SUPERUSER:-postgres} -d postgres"
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+
+    networks:
+      - chatvardage
+
+  # Outil générique d'administration BD (dev uniquement). Ce n'est pas le Dashboard AdminJS.
+  # Pas de profil Compose : toute la stack est un environnement de dev lié à 127.0.0.1
+  # (voir docs/architecture.md, « Choix d'orchestration »).
+  adminer:
+    image: adminer:4.8.1
+    container_name: chatvardage-adminer
+    restart: unless-stopped
+
+    ports:
+      - "127.0.0.1:8080:8080"
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    networks:
+      - chatvardage
+
+  redis:
+    image: redis:7.4-alpine
+    container_name: chatvardage-redis
+    restart: unless-stopped
+
+    environment:
+      # Lu par redis-cli (healthcheck ci-dessous et scripts/healthcheck.sh) : le mot de
+      # passe n'est jamais interpolé dans une commande shell.
+      REDISCLI_AUTH: ${REDIS_PASSWORD:-chatvardage_redis_dev}
+
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --requirepass
+      - ${REDIS_PASSWORD:-chatvardage_redis_dev}
+
+    ports:
+      - "127.0.0.1:6379:6379"
+
+    volumes:
+      - redis_data:/data
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "redis-cli ping | grep -q PONG"
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+
+    networks:
+      - chatvardage
+
+  auth-service:
+    build:
+      context: ../A26_5A6_01-Authentification
+      dockerfile: Dockerfile
+
+    container_name: chatvardage-auth-service
+    restart: unless-stopped
+
+    environment:
+      PORT: 3001
+
+      DATABASE_URL: >-
+        postgresql://${AUTH_DB_USER:-auth_service}:${AUTH_DB_PASSWORD:-auth_service_dev}@postgres:5432/${AUTH_DB:-chatvardage_auth}
+
+      JWT_SECRET: ${JWT_SECRET:-dev_secret_change_me_before_prod}
+      JWT_DUREE_DE_VIE_HEURES: ${JWT_DUREE_DE_VIE_HEURES:-24}
+      RUST_LOG: ${RUST_LOG:-info}
+      # Auth-Service (Rust) lit CORS_ALLOWED_ORIGINS : alimenté par CORS_ORIGINS, la
+      # seule variable CORS de .env, pour que tous les services partagent la même liste.
+      CORS_ALLOWED_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
+
+    ports:
+      - "127.0.0.1:3001:3001"
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    # Ce healthcheck remplace le HEALTHCHECK du Dockerfile d'Auth-Service.
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -fs http://localhost:3001/health || exit 1"
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 15s
+
+    networks:
+      - chatvardage
+
+  room-service:
+    build:
+      context: ../A26_5A6_01-Room-Service
+      dockerfile: Dockerfile
+
+    container_name: chatvardage-room-service
+    restart: unless-stopped
+
+    environment:
+      # Environnement Docker local du C2 : les services communiquent sur le réseau privé
+      # Compose en HTTP. Le Room-Service réserve l’exigence HTTPS à la production réelle.
+      NODE_ENV: development
+      PORT: 3003
+
+      DATABASE_URL: >-
+        postgresql://${ROOMS_DB_USER:-room_service}:${ROOMS_DB_PASSWORD:-room_service_dev}@postgres:5432/${ROOMS_DB:-chatvardage_rooms}?schema=public
+
+      AUTH_SERVICE_URL: http://auth-service:3001
+      # Room-Service lit AUTH_TIMEOUT_MS : alimenté par AUTH_SERVICE_TIMEOUT_MS de .env.
+      AUTH_TIMEOUT_MS: ${AUTH_SERVICE_TIMEOUT_MS:-3000}
+
+    ports:
+      - "127.0.0.1:3003:3003"
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"fetch('http://localhost:3003/api/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))\""
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+
+    networks:
+      - chatvardage
+
+  message-service:
+    build:
+      context: ../A26_5A6_01-Message-Service
+      dockerfile: Dockerfile
+
+    container_name: chatvardage-message-service
+    restart: unless-stopped
+
+    environment:
+      PORT: 3004
+
+      DATABASE_URL: >-
+        postgresql://${MESSAGES_DB_USER:-message_service}:${MESSAGES_DB_PASSWORD:-message_service_dev}@postgres:5432/${MESSAGES_DB:-chatvardage_messages}?schema=public
+
+      REDIS_URL: redis://:${REDIS_PASSWORD:-chatvardage_redis_dev}@redis:6379
+      AUTH_SERVICE_URL: http://auth-service:3001
+      AUTH_SERVICE_TIMEOUT_MS: ${AUTH_SERVICE_TIMEOUT_MS:-3000}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
+
+    ports:
+      - "127.0.0.1:3004:3004"
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"fetch('http://localhost:3004/api/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))\""
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+
+    networks:
+      - chatvardage
+
+  user-config-service:
+    build:
+      context: ../A26_5A6_01-User-Config-Service
+      dockerfile: Dockerfile
+
+    container_name: chatvardage-user-config-service
+    restart: unless-stopped
+
+    environment:
+      PORT: 3005
+
+      DATABASE_URL: >-
+        postgresql://${CONFIG_DB_USER:-config_service}:${CONFIG_DB_PASSWORD:-config_service_dev}@postgres:5432/${CONFIG_DB:-chatvardage_config}?schema=public
+
+      AUTH_SERVICE_URL: http://auth-service:3001
+      AUTH_SERVICE_TIMEOUT_MS: ${AUTH_SERVICE_TIMEOUT_MS:-3000}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
+
+    ports:
+      - "127.0.0.1:3005:3005"
+
+    # Ce healthcheck remplace le HEALTHCHECK du Dockerfile de User-Config-Service.
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"fetch('http://localhost:3005/api/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))\""
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+
+    networks:
+      - chatvardage
+
+  serveur-api:
+    build:
+      context: ../A26_5A6_01-Serveur-API
+      dockerfile: Dockerfile
+
+    container_name: chatvardage-serveur-api
+    restart: unless-stopped
+
+    environment:
+      PORT: 3000
+      AUTH_SERVICE_URL: http://auth-service:3001
+      ROOM_SERVICE_URL: http://room-service:3003
+      MESSAGE_SERVICE_URL: http://message-service:3004
+      USER_CONFIG_SERVICE_URL: http://user-config-service:3005
+      PROXY_TIMEOUT_MS: ${PROXY_TIMEOUT_MS:-5000}
+      MAX_PROXY_BODY_BYTES: ${MAX_PROXY_BODY_BYTES:-1048576}
+      AUTH_RATE_LIMIT_WINDOW_MS: ${AUTH_RATE_LIMIT_WINDOW_MS:-60000}
+      AUTH_RATE_LIMIT_MAX: ${AUTH_RATE_LIMIT_MAX:-10}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
+      TRUST_PROXY: ${TRUST_PROXY:-false}
+
+    ports:
+      - "127.0.0.1:3000:3000"
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"fetch('http://localhost:3000/api/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))\""
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+
+    depends_on:
+      auth-service:
+        condition: service_healthy
+      room-service:
+        condition: service_healthy
+      message-service:
+        condition: service_healthy
+      user-config-service:
+        condition: service_healthy
+
+    networks:
+      - chatvardage
+
+networks:
+  chatvardage:
+    name: chatvardage-network
+
+volumes:
+  postgres_data:
+  redis_data:
