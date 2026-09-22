@@ -264,6 +264,55 @@ services:
     networks:
       - chatvardage
 
+  serveur-api:
+    build:
+      context: ../A26_5A6_01-Serveur-API
+      dockerfile: Dockerfile
+
+    container_name: chatvardage-serveur-api
+    restart: unless-stopped
+
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      AUTH_SERVICE_URL: http://auth-service:3001
+      ROOM_SERVICE_URL: http://room-service:3003
+      MESSAGE_SERVICE_URL: http://message-service:3004
+      USER_CONFIG_SERVICE_URL: http://user-config-service:3005
+      PROXY_TIMEOUT_MS: ${PROXY_TIMEOUT_MS:-5000}
+      MAX_PROXY_BODY_BYTES: ${MAX_PROXY_BODY_BYTES:-1048576}
+      AUTH_RATE_LIMIT_WINDOW_MS: ${AUTH_RATE_LIMIT_WINDOW_MS:-60000}
+      AUTH_RATE_LIMIT_MAX: ${AUTH_RATE_LIMIT_MAX:-10}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
+      TRUST_PROXY: ${TRUST_PROXY:-false}
+
+    ports:
+      - "3000:3000"
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"fetch('http://localhost:3000/api/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))\""
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+
+    depends_on:
+      auth-service:
+        condition: service_healthy
+      room-service:
+        condition: service_healthy
+      message-service:
+        condition: service_healthy
+      user-config-service:
+        condition: service_healthy
+
+    networks:
+      - chatvardage
+
 networks:
   chatvardage:
     name: chatvardage-network

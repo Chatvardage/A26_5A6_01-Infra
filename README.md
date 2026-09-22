@@ -5,7 +5,7 @@ Infrastructure Docker du Contrôle 2. Ce dépôt fournit **PostgreSQL, Redis, le
 
 ## Démarrage
 Prérequis : Docker + Docker Compose uniquement.
-Le healthcheck d’Auth-Service est défini dans son `Dockerfile`; Room-Service possède aussi un healthcheck dans ce Compose.
+Le Compose orchestre Auth, Room, Message, User-Config et Serveur-API avec leurs healthchecks avant d'exposer le Gateway sur le port `3000`.
 
 ```bash
 cp .env.example .env
@@ -58,6 +58,18 @@ curl http://localhost:3001/health
 # Ensuite, vous pouvez tester les endpoints d'authentification avec Postman ou curl (voir README du service Authentification).
 ```
 
+
+## Tester la stack backend complète
+
+```bash
+docker compose up --build -d
+docker compose ps
+curl http://localhost:3000/api/health
+curl http://localhost:3000/api/health/upstreams
+```
+
+Le second endpoint doit rapporter `auth`, `room`, `message` et `userConfig` à `ok` lorsque toute la stack backend est prête.
+
 ## Réinitialiser l'environnement
 ```bash
 ./scripts/reset.sh
@@ -82,7 +94,7 @@ Pour le C2, PostgreSQL reste la source de vérité. Redis/WebSocket servent au t
 
 ## Authentification intégrée
 
-Le Compose global démarre `auth-service` (3001) avant `room-service` et `message-service`. Rooms et Messages reçoivent le JWT du client puis valident la session courante auprès de `http://auth-service:3001/api/auth/me`. Le rôle reste la propriété du service Auth et n'est pas recopié dans le JWT.
+Le Compose global démarre `auth-service` (3001) avant `room-service`, `message-service` et `user-config-service`, puis démarre `serveur-api` (3000) lorsque les quatre services sont sains. Rooms et Messages reçoivent le JWT du client puis valident la session courante auprès de `http://auth-service:3001/api/auth/me`. Pour User-Config, le Gateway valide lui-même la session auprès d'Auth et transmet uniquement un `x-user-id` de confiance. Le rôle reste la propriété du service Auth et n'est pas recopié dans le JWT.
 
 Pour l’environnement Docker local du contrôle, `room-service` est explicitement lancé avec `NODE_ENV=development`. Cela autorise l’URL HTTP interne `http://auth-service:3001` sur le réseau Docker privé. En production réelle, Room-Service conserve sa validation qui exige HTTPS. Le délai Room-Service est fourni avec `AUTH_TIMEOUT_MS`; Message-Service utilise `AUTH_SERVICE_TIMEOUT_MS`.
 
