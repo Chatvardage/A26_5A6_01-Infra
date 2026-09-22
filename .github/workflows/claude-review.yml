@@ -30,6 +30,7 @@ jobs:
 
       - name: Run Claude review
         id: review
+        timeout-minutes: 15
         env:
           ANTHROPIC_MODEL: claude-sonnet-4-6
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
@@ -64,6 +65,7 @@ jobs:
         run: npm install -g @github/copilot@1.0.87
 
       - name: Run Copilot fallback review
+        timeout-minutes: 15
         env:
           GH_TOKEN: ${{ secrets.COPILOT_REVIEW_TOKEN }}
         run: |

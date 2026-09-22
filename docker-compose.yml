@@ -121,8 +121,9 @@ services:
       JWT_SECRET: ${JWT_SECRET:-dev_secret_change_me_before_prod}
       JWT_DUREE_DE_VIE_HEURES: ${JWT_DUREE_DE_VIE_HEURES:-24}
       RUST_LOG: ${RUST_LOG:-info}
-      # Auth-Service (Rust) lit CORS_ALLOWED_ORIGINS ; les services Node lisent CORS_ORIGINS.
-      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173}
+      # Auth-Service (Rust) lit CORS_ALLOWED_ORIGINS : alimenté par CORS_ORIGINS, la
+      # seule variable CORS de .env, pour que tous les services partagent la même liste.
+      CORS_ALLOWED_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
 
     ports:
       - "127.0.0.1:3001:3001"
@@ -164,6 +165,7 @@ services:
         postgresql://${ROOMS_DB_USER:-room_service}:${ROOMS_DB_PASSWORD:-room_service_dev}@postgres:5432/${ROOMS_DB:-chatvardage_rooms}?schema=public
 
       AUTH_SERVICE_URL: http://auth-service:3001
+      # Room-Service lit AUTH_TIMEOUT_MS : alimenté par AUTH_SERVICE_TIMEOUT_MS de .env.
       AUTH_TIMEOUT_MS: ${AUTH_SERVICE_TIMEOUT_MS:-3000}
 
     ports:

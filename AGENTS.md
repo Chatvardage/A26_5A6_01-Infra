@@ -58,4 +58,4 @@ Attention : cela efface les données locales.
 
 Tout port publié dans `docker-compose.yml` doit être lié à `127.0.0.1` (`"127.0.0.1:PORT:PORT"`), jamais à toutes les interfaces.
 
-Les origines CORS utilisent deux variables : `CORS_ALLOWED_ORIGINS` (Auth-Service, Rust) et `CORS_ORIGINS` (services Node et Serveur-API). Les garder synchronisées dans `.env.example`.
+Les origines CORS viennent d'une seule variable de `.env`, `CORS_ORIGINS`. `docker-compose.yml` la transmet à Auth-Service sous le nom `CORS_ALLOWED_ORIGINS` (Rust) et aux services Node sous son propre nom. Ne pas réintroduire une seconde variable CORS dans `.env.example`.

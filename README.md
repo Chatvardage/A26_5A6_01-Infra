@@ -123,11 +123,11 @@ Le Compose global démarre `auth-service` (3001) avant `room-service`, `message-
 Pour l’environnement Docker local du contrôle, `room-service` est explicitement lancé avec `NODE_ENV=development`. Cela autorise l’URL HTTP interne `http://auth-service:3001` sur le réseau Docker privé. En production réelle, Room-Service conserve sa validation qui exige HTTPS. Le délai Room-Service est fourni avec `AUTH_TIMEOUT_MS`; Message-Service utilise `AUTH_SERVICE_TIMEOUT_MS`.
 
 ### Variables CORS
-Deux variables coexistent volontairement dans `.env`, car chaque service lit son propre nom :
-- `CORS_ALLOWED_ORIGINS` : Auth-Service (Rust);
-- `CORS_ORIGINS` : Message-Service, User-Config-Service et Serveur-API (Node).
+Une seule variable dans `.env` : `CORS_ORIGINS` (origines séparées par des virgules). `docker-compose.yml` la transmet :
+- sous le nom `CORS_ALLOWED_ORIGINS` à Auth-Service (Rust);
+- sous le nom `CORS_ORIGINS` à Message-Service, User-Config-Service et Serveur-API (Node).
 
-Les garder synchronisées : si une seule est renseignée, les autres services retombent sur leur valeur par défaut sans message d'erreur.
+Tous les services partagent donc toujours la même liste. Ne pas ajouter `CORS_ALLOWED_ORIGINS` dans `.env` : Compose l'ignorerait.
 
 Au premier démarrage sur un volume vide, Infra crée les bases/rôles PostgreSQL. Chaque service exécute ensuite ses propres migrations au démarrage de son conteneur.
 
