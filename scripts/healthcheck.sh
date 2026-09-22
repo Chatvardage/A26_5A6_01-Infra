@@ -1,6 +1,16 @@
 #!/bin/sh
 set -eu
 
+# Exécuter depuis la racine du dépôt, où se trouvent docker-compose.yml et .env.
+cd "$(dirname "$0")/.."
+
+# Charger .env (s'il existe) pour utiliser les mêmes identifiants que docker compose.
+if [ -f .env ]; then
+  set -a
+  . ./.env
+  set +a
+fi
+
 echo "== PostgreSQL =="
 docker compose exec -T postgres pg_isready -U "${POSTGRES_SUPERUSER:-postgres}" -d postgres
 

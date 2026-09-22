@@ -31,6 +31,23 @@ create_role_and_db() {
       ;;
   esac
 
+  if [ -z "$pass" ]; then
+    echo "Mot de passe vide pour le rôle: $user" >&2
+    exit 1
+  fi
+
+  # Refuser les retours à la ligne et retours chariot dans le mot de passe.
+  # (Un littéral est requis pour \n : $(printf '\n') serait vidé par la substitution.)
+  nl='
+'
+  cr=$(printf '\r')
+  case "$pass" in
+    *"$nl"*|*"$cr"*)
+      echo "Mot de passe invalide pour le rôle $user : caractères de contrôle interdits" >&2
+      exit 1
+      ;;
+  esac
+
   # Échapper les apostrophes du mot de passe avant de l'insérer comme littéral SQL.
   escaped_pass=$(printf "%s" "$pass" | sed "s/'/''/g")
 

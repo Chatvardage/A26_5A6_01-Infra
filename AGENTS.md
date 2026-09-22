@@ -55,3 +55,7 @@ Attention : cela efface les données locales.
 
 ## Variables et sécurité
 `.env` ne doit jamais être commité. `.env.example` contient seulement des identifiants de développement. Un service doit utiliser uniquement le compte SQL de sa propre base.
+
+Tout port publié dans `docker-compose.yml` doit être lié à `127.0.0.1` (`"127.0.0.1:PORT:PORT"`), jamais à toutes les interfaces.
+
+Les origines CORS utilisent deux variables : `CORS_ALLOWED_ORIGINS` (Auth-Service, Rust) et `CORS_ORIGINS` (services Node et Serveur-API). Les garder synchronisées dans `.env.example`.

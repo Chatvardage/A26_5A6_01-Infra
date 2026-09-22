@@ -4,7 +4,18 @@ Infrastructure Docker du Contrôle 2. Ce dépôt fournit **PostgreSQL, Redis, le
 
 
 ## Démarrage
-Prérequis : Docker + Docker Compose uniquement.
+Prérequis : Docker + Docker Compose, et **tous les dépôts clonés côte à côte** dans un même dossier parent. Le `docker-compose.yml` construit les microservices depuis des chemins relatifs (`../A26_5A6_01-Authentification`, `../A26_5A6_01-Room-Service`, etc.) : si un dépôt manque, `docker compose up --build` échoue.
+
+```text
+Chatvardage/
+├── A26_5A6_01-Infra/                 # ce dépôt (lancer docker compose ici)
+├── A26_5A6_01-Authentification/
+├── A26_5A6_01-Room-Service/
+├── A26_5A6_01-Message-Service/
+├── A26_5A6_01-User-Config-Service/
+└── A26_5A6_01-Serveur-API/
+```
+
 Le Compose orchestre Auth, Room, Message, User-Config et Serveur-API avec leurs healthchecks avant d'exposer le Gateway sur le port `3000`.
 
 ```bash
@@ -22,6 +33,8 @@ Au premier démarrage, PostgreSQL crée automatiquement :
 Les bases sont volontairement **vides au départ**. Les tables sont créées par les migrations du service concerné (Prisma ou l'outil de migration choisi par ce service).
 
 ## Connexions
+> ⚠️ Les identifiants ci-dessous (et ceux de `.env.example`) sont réservés au développement local. Ne jamais les réutiliser dans un environnement partagé ou de production.
+
 Depuis un service lancé **dans Docker** :
 - Auth : `postgresql://auth_service:auth_service_dev@postgres:5432/chatvardage_auth`
 - Room : `postgresql://room_service:room_service_dev@postgres:5432/chatvardage_rooms`
@@ -29,7 +42,7 @@ Depuis un service lancé **dans Docker** :
 - Config : `postgresql://config_service:config_service_dev@postgres:5432/chatvardage_config`
 - Redis : `redis://:chatvardage_redis_dev@redis:6379`
 
-Les ports PostgreSQL (`5432`) et Redis (`6379`) sont liés à `127.0.0.1` uniquement : ils restent accessibles aux outils locaux, mais ne sont pas exposés aux autres machines du réseau.
+Tous les ports publiés (PostgreSQL `5432`, Redis `6379`, Adminer `8080`, Gateway `3000`, Auth `3001`, Room `3003`, Message `3004`, User-Config `3005`) sont liés à `127.0.0.1` uniquement : ils restent accessibles aux outils locaux, mais ne sont pas exposés aux autres machines du réseau.
 
 Depuis un service lancé **sur la machine hôte**, remplacer `postgres` par `localhost`. Exemple Room-Service :
 
@@ -73,6 +86,8 @@ Le second endpoint doit rapporter `auth`, `room`, `message` et `userConfig` à `
 ## Réinitialiser l'environnement
 ```bash
 ./scripts/reset.sh
+# Sans confirmation interactive (CI, scripts) :
+./scripts/reset.sh -y
 ```
 Cela supprime les volumes PostgreSQL/Redis et recrée les quatre bases vides. Les migrations des microservices doivent ensuite être réappliquées.
 
@@ -98,12 +113,23 @@ Le Compose global démarre `auth-service` (3001) avant `room-service`, `message-
 
 Pour l’environnement Docker local du contrôle, `room-service` est explicitement lancé avec `NODE_ENV=development`. Cela autorise l’URL HTTP interne `http://auth-service:3001` sur le réseau Docker privé. En production réelle, Room-Service conserve sa validation qui exige HTTPS. Le délai Room-Service est fourni avec `AUTH_TIMEOUT_MS`; Message-Service utilise `AUTH_SERVICE_TIMEOUT_MS`.
 
+### Variables CORS
+Deux variables coexistent volontairement dans `.env`, car chaque service lit son propre nom :
+- `CORS_ALLOWED_ORIGINS` : Auth-Service (Rust);
+- `CORS_ORIGINS` : Message-Service, User-Config-Service et Serveur-API (Node).
+
+Les garder synchronisées : si une seule est renseignée, les autres services retombent sur leur valeur par défaut sans message d'erreur.
+
 Au premier démarrage sur un volume vide, Infra crée les bases/rôles PostgreSQL. Chaque service exécute ensuite ses propres migrations au démarrage de son conteneur.
 
-## Accéder à l'interface BD
-- Se rendre sur http://localhost:8080 (Dashboard)
-- Utiliser "PostgreSQL" comme type de base
-- Utiliser "postgres" comme serveur
-- Utiliser "postgres" comme utilisateur
-- Utiliser "postgres" comme mot de passe
-- Sélectionner la base souhaitée dans le menu déroulant (ou laisser vide pour voir toutes les bases)
+## Adminer (administration BD, dev uniquement)
+Le service `adminer` est un outil générique d'inspection de PostgreSQL pour le développement. **Ce n'est pas le Dashboard** : le Dashboard (AdminJS) vit dans le dépôt `A26_5A6_01-Dashboard` et n'est pas encore orchestré par ce Compose.
+
+> ⚠️ Les identifiants ci-dessous sont ceux du superutilisateur PostgreSQL de développement (`POSTGRES_SUPERUSER`/`POSTGRES_SUPERPASS`).
+
+- Se rendre sur http://localhost:8080
+- Système : « PostgreSQL »
+- Serveur : `postgres`
+- Utilisateur : `postgres`
+- Mot de passe : `postgres`
+- Base : sélectionner la base souhaitée dans le menu déroulant (ou laisser vide pour voir toutes les bases)
