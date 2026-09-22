@@ -8,6 +8,11 @@ permissions:
   contents: read
   pull-requests: write
 
+# Actions épinglées sur un SHA de commit et CLI npm sur une version exacte :
+# un tag ou une version « latest » peut être republié(e) par un tiers (supply-chain),
+# alors que ce workflow a accès aux jetons Claude/Copilot et à l'écriture des PR.
+# Mise à jour : `git ls-remote --tags https://github.com/actions/<action>` et
+# `npm view <paquet> version`, puis remplacer SHA/commentaire/version ensemble.
 jobs:
   claude-review:
     runs-on: ubuntu-latest
@@ -16,12 +21,12 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 0
 
       - name: Install Claude Code
-        run: npm install -g @anthropic-ai/claude-code
+        run: npm install -g @anthropic-ai/claude-code@2.1.280
 
       - name: Run Claude review
         id: review
@@ -46,17 +51,17 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 0
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 20
 
       - name: Install GitHub Copilot CLI
-        run: npm install -g @github/copilot
+        run: npm install -g @github/copilot@1.0.87
 
       - name: Run Copilot fallback review
         env:

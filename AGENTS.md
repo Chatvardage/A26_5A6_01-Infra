@@ -32,7 +32,7 @@ docker compose ps
 ./scripts/healthcheck.sh
 docker compose logs --no-color --tail=100 postgres redis
 ```
-Vérifier que PostgreSQL et Redis sont `healthy`.
+Vérifier que PostgreSQL et Redis sont `healthy`. `./scripts/healthcheck.sh` vérifie aussi les cinq microservices et `/api/health/upstreams` du Gateway ; `./scripts/healthcheck.sh --infra` se limite à PostgreSQL et Redis.
 
 Puis valider au moins une migration réelle d'un microservice contre une base neuve. Pour Room-Service :
 ```bash

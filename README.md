@@ -83,6 +83,15 @@ curl http://localhost:3000/api/health/upstreams
 
 Le second endpoint doit rapporter `auth`, `room`, `message` et `userConfig` à `ok` lorsque toute la stack backend est prête.
 
+## Vérifier la santé de la stack
+```bash
+# Stack complète : PostgreSQL, Redis, les 5 microservices (healthy) et /api/health/upstreams du Gateway
+./scripts/healthcheck.sh
+# Infrastructure seule (PostgreSQL + Redis), par exemple si un microservice tourne sur l'hôte
+./scripts/healthcheck.sh --infra
+```
+Le script s'arrête avec un code non nul au premier contrôle en échec et liste l'état de chaque microservice. Il ne dépend pas de `curl` sur l'hôte : les appels sont faits depuis les conteneurs.
+
 ## Réinitialiser l'environnement
 ```bash
 ./scripts/reset.sh
