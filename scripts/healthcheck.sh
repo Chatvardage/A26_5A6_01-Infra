@@ -4,20 +4,23 @@ set -eu
 # Exécuter depuis la racine du dépôt, où se trouvent docker-compose.yml et .env.
 cd "$(dirname "$0")/.."
 
-# Charger .env (s'il existe) pour utiliser les mêmes identifiants que docker compose.
-if [ -f .env ]; then
-  set -a
-  . ./.env
-  set +a
-fi
+# Les identifiants sont lus dans l'environnement des conteneurs (fourni par
+# docker compose à partir de .env) : ce script ne lit ni n'exécute .env lui-même.
 
 echo "== PostgreSQL =="
-docker compose exec -T postgres pg_isready -U "${POSTGRES_SUPERUSER:-postgres}" -d postgres
+docker compose exec -T postgres sh -c 'pg_isready -U "$POSTGRES_USER" -d postgres'
 
 echo "== Databases =="
-docker compose exec -T postgres psql -U "${POSTGRES_SUPERUSER:-postgres}" -d postgres -Atc "SELECT datname FROM pg_database WHERE datname LIKE 'chatvardage_%' ORDER BY datname;"
+docker compose exec -T postgres sh -c 'psql -U "$POSTGRES_USER" -d postgres -Atc "$1"' _ \
+  "SELECT datname FROM pg_database WHERE datname LIKE 'chatvardage_%' ORDER BY datname;"
 
 echo "== Redis =="
-docker compose exec -T -e REDISCLI_AUTH="${REDIS_PASSWORD:-chatvardage_redis_dev}" redis redis-cli ping
+# REDISCLI_AUTH est défini dans le service redis de docker-compose.yml.
+redis_reply=$(docker compose exec -T redis redis-cli ping)
+echo "$redis_reply"
+if [ "$redis_reply" != "PONG" ]; then
+  echo "Redis ne répond pas PONG" >&2
+  exit 1
+fi
 
 echo "Infrastructure OK"

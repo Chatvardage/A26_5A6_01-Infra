@@ -50,6 +50,8 @@ services:
       - chatvardage
 
   # Outil générique d'administration BD (dev uniquement). Ce n'est pas le Dashboard AdminJS.
+  # Pas de profil Compose : toute la stack est un environnement de dev lié à 127.0.0.1
+  # (voir docs/architecture.md, « Choix d'orchestration »).
   adminer:
     image: adminer:4.8.1
     container_name: chatvardage-adminer
@@ -70,6 +72,11 @@ services:
     container_name: chatvardage-redis
     restart: unless-stopped
 
+    environment:
+      # Lu par redis-cli (healthcheck ci-dessous et scripts/healthcheck.sh) : le mot de
+      # passe n'est jamais interpolé dans une commande shell.
+      REDISCLI_AUTH: ${REDIS_PASSWORD:-chatvardage_redis_dev}
+
     command:
       - redis-server
       - --appendonly
@@ -87,7 +94,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          "REDISCLI_AUTH='${REDIS_PASSWORD:-chatvardage_redis_dev}' redis-cli ping"
+          "redis-cli ping | grep -q PONG"
         ]
       interval: 5s
       timeout: 3s

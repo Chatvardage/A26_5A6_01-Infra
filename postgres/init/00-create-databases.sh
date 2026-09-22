@@ -36,7 +36,8 @@ create_role_and_db() {
     exit 1
   fi
 
-  # Refuser les retours à la ligne et retours chariot dans le mot de passe.
+  # Refuser les retours à la ligne et retours chariot dans le mot de passe
+  # (presque toujours une erreur de copie dans .env).
   # (Un littéral est requis pour \n : $(printf '\n') serait vidé par la substitution.)
   nl='
 '
@@ -48,16 +49,22 @@ create_role_and_db() {
       ;;
   esac
 
-  # Échapper les apostrophes du mot de passe avant de l'insérer comme littéral SQL.
-  escaped_pass=$(printf "%s" "$pass" | sed "s/'/''/g")
-
-  psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname postgres <<SQL
-DO \$\$ BEGIN
-  IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = '$user') THEN
-    CREATE ROLE $user LOGIN PASSWORD '$escaped_pass';
-  END IF;
-END \$\$;
-SELECT 'CREATE DATABASE $db OWNER $user' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '$db')\gexec
+  # Les valeurs sont passées en variables psql (-v) et le heredoc est quoté :
+  # le shell n'interpole rien dans le SQL, et psql échappe lui-même les valeurs
+  # (:'var' pour un littéral, :"var" pour un identifiant). Pas de bloc DO : psql
+  # n'interpole pas ses variables à l'intérieur d'une chaîne $$...$$.
+  # Si le rôle existe déjà (script rejoué à la main), son mot de passe est
+  # réaligné sur .env au lieu d'être ignoré silencieusement.
+  psql -v ON_ERROR_STOP=1 -v db="$db" -v user="$user" -v pass="$pass" \
+    --username "$POSTGRES_USER" --dbname postgres <<'SQL'
+SELECT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = :'user') AS role_exists \gset
+\if :role_exists
+ALTER ROLE :"user" WITH LOGIN PASSWORD :'pass';
+\else
+CREATE ROLE :"user" LOGIN PASSWORD :'pass';
+\endif
+SELECT format('CREATE DATABASE %I OWNER %I', :'db', :'user')
+WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = :'db') \gexec
 SQL
 }
 
