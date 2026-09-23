@@ -16,7 +16,7 @@ Chatvardage/
 └── A26_5A6_01-Serveur-API/
 ```
 
-Le Compose orchestre Auth, Room, Message, User-Config et Serveur-API avec leurs healthchecks avant d'exposer le Gateway sur le port `3000`.
+Le Compose orchestre Auth, Room, Message, User-Config, Dashboard et Serveur-API avec leurs healthchecks. Le Gateway est exposé sur le port `3000` et le Dashboard sur le port `3002`.
 
 ```bash
 cp .env.example .env
@@ -42,7 +42,7 @@ Depuis un service lancé **dans Docker** :
 - Config : `postgresql://config_service:config_service_dev@postgres:5432/chatvardage_config`
 - Redis : `redis://:chatvardage_redis_dev@redis:6379`
 
-Tous les ports publiés (PostgreSQL `5432`, Redis `6379`, Adminer `8080`, Gateway `3000`, Auth `3001`, Room `3003`, Message `3004`, User-Config `3005`) sont liés à `127.0.0.1` uniquement : ils restent accessibles aux outils locaux, mais ne sont pas exposés aux autres machines du réseau.
+Tous les ports publiés (PostgreSQL `5432`, Redis `6379`, Adminer `8080`, Gateway `3000`, Auth `3001`, Dashboard `3002`, Room `3003`, Message `3004`, User-Config `3005`) sont liés à `127.0.0.1` uniquement : ils restent accessibles aux outils locaux, mais ne sont pas exposés aux autres machines du réseau.
 
 Depuis un service lancé **sur la machine hôte**, remplacer `postgres` par `localhost`. Exemple Room-Service :
 
@@ -107,7 +107,7 @@ Cela supprime les volumes PostgreSQL/Redis et recrée les quatre bases vides. Le
 - Room-Service : salons/membres/invitations + migrations Rooms
 - Message-Service : DM/historique/temps réel + migrations Messages
 - User-Config-Service : alias/thème/préférences + migrations Config
-- Dashboard : interface d'administration / AdminJS
+- Dashboard : interface d'administration disponible sur http://localhost:3002/administration
 - Infra : PostgreSQL, Redis, Docker Compose, réseau, volumes et orchestration
 
 ## Règle de propriété des données
@@ -132,7 +132,7 @@ Tous les services partagent donc toujours la même liste. Ne pas ajouter `CORS_A
 Au premier démarrage sur un volume vide, Infra crée les bases/rôles PostgreSQL. Chaque service exécute ensuite ses propres migrations au démarrage de son conteneur.
 
 ## Adminer (administration BD, dev uniquement)
-Le service `adminer` est un outil générique d'inspection de PostgreSQL pour le développement. **Ce n'est pas le Dashboard** : le Dashboard (AdminJS) vit dans le dépôt `A26_5A6_01-Dashboard` et n'est pas encore orchestré par ce Compose.
+Le service `adminer` est un outil générique d'inspection de PostgreSQL pour le développement. **Ce n'est pas le Dashboard** : le Dashboard est disponible sur http://localhost:3002/administration.
 
 > ⚠️ Les identifiants ci-dessous sont ceux du superutilisateur PostgreSQL de développement (`POSTGRES_SUPERUSER`/`POSTGRES_SUPERPASS`).
 
