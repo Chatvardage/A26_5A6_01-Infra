@@ -65,6 +65,10 @@ CREATE ROLE :"user" LOGIN PASSWORD :'pass';
 \endif
 SELECT format('CREATE DATABASE %I OWNER %I', :'db', :'user')
 WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = :'db') \gexec
+-- Par défaut, PUBLIC peut se connecter à toute base : le compte d'un service
+-- ouvrait donc aussi celles des autres. Seul le propriétaire (et le
+-- superutilisateur) garde la connexion.
+SELECT format('REVOKE CONNECT, TEMPORARY ON DATABASE %I FROM PUBLIC', :'db') \gexec
 SQL
 }
 
