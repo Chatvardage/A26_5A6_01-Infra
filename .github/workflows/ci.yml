@@ -1,0 +1,61 @@
+name: CI
+
+# Validation du Compose et des scripts à chaque PR et sur les branches
+# principales, et vérification que les fichiers partagés entre services
+# (src/partage/) n'ont pas divergé.
+
+on:
+  pull_request:
+  push:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  compose-et-scripts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      # Valide la syntaxe et l'interpolation (les dépôts des services ne sont
+      # pas nécessaires : aucune image n'est construite).
+      - run: docker compose --env-file .env.example config -q
+      # shellcheck est préinstallé sur les runners ubuntu-latest.
+      - run: shellcheck scripts/*.sh postgres/init/*.sh
+
+  fichiers-partages:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      # Jeton en lecture seule sur les dépôts de l'organisation (ils sont
+      # privés) : fine-grained PAT, permission « Contents: read ».
+      JETON: ${{ secrets.CHATVARDAGE_REPOS_TOKEN }}
+      # Même branche que cette PR dans les autres dépôts si elle existe,
+      # sinon leur branche par défaut.
+      BRANCHE: ${{ github.head_ref || github.ref_name }}
+    steps:
+      - name: Secret absent
+        if: env.JETON == ''
+        run: >-
+          echo "::warning::Secret CHATVARDAGE_REPOS_TOKEN absent : vérification
+          des fichiers partagés sautée (voir README, « Fichiers partagés »)."
+      - uses: actions/checkout@v4
+        if: env.JETON != ''
+        with:
+          path: A26_5A6_01-Infra
+      - name: Cloner les services qui partagent des fichiers
+        if: env.JETON != ''
+        run: |
+          for depot in A26_5A6_01-Room-Service A26_5A6_01-Message-Service A26_5A6_01-User-Config-Service; do
+            url="https://x-access-token:${JETON}@github.com/${GITHUB_REPOSITORY_OWNER}/${depot}.git"
+            git clone --quiet --depth 1 --branch "$BRANCHE" "$url" "$depot" 2>/dev/null \
+              || git clone --quiet --depth 1 "$url" "$depot"
+          done
+      - name: Vérifier les fichiers partagés
+        if: env.JETON != ''
+        run: ./A26_5A6_01-Infra/scripts/verifier-fichiers-partages.sh

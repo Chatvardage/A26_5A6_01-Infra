@@ -135,6 +135,8 @@ Quelques fichiers sont copiés à l'identique dans plusieurs dépôts (`src/part
 ./scripts/verifier-fichiers-partages.sh
 ```
 
+La CI d'Infra (`.github/workflows/ci.yml`) valide aussi `docker compose config` et les scripts (`shellcheck`), et lance cette vérification en clonant les trois services sur la même branche que la PR (sinon leur branche par défaut). Les dépôts étant privés, il faut un secret d'organisation ou de dépôt **`CHATVARDAGE_REPOS_TOKEN`** : un jeton à accès fin, en lecture seule (« Contents: read ») sur ces dépôts. Sans ce secret, l'étape est sautée avec un avertissement.
+
 ### Variables CORS
 Une seule variable dans `.env` : `CORS_ORIGINS` (origines séparées par des virgules), lue sous ce même nom par Auth-Service, Message-Service, User-Config-Service et Serveur-API. Tous les services partagent donc toujours la même liste.
 
