@@ -124,16 +124,19 @@ Pour le C2, PostgreSQL reste la source de vérité. Redis/WebSocket servent au t
 
 Le Compose global démarre `auth-service` (3001) avant `room-service`, `message-service` et `user-config-service`, puis démarre `serveur-api` (3000) lorsque les quatre services sont sains. Rooms et Messages reçoivent le JWT du client puis valident la session courante auprès de `http://auth-service:3001/api/auth/me`. Pour User-Config, le Gateway valide lui-même la session auprès d'Auth et transmet uniquement un `x-user-id` de confiance. Le rôle reste la propriété du service Auth et n'est pas recopié dans le JWT.
 
-Pour l’environnement Docker local du contrôle, `room-service` est explicitement lancé avec `NODE_ENV=development`. Cela autorise l’URL HTTP interne `http://auth-service:3001` sur le réseau Docker privé. En production réelle, Room-Service conserve sa validation qui exige HTTPS. Le délai Room-Service est fourni avec `AUTH_TIMEOUT_MS`; Message-Service utilise `AUTH_SERVICE_TIMEOUT_MS`.
+Pour l’environnement Docker local du contrôle, `room-service` est explicitement lancé avec `NODE_ENV=development`. Cela autorise l’URL HTTP interne `http://auth-service:3001` sur le réseau Docker privé. En production réelle, Room-Service et Message-Service exigent HTTPS. Les deux lisent les mêmes variables : `AUTH_SERVICE_TIMEOUT_MS` (délai d'appel) et `AUTH_CACHE_TTL_MS` (durée de mémorisation d'un jeton validé, 10 s par défaut, `0` pour interroger Auth à chaque requête). Avec ce cache, une révocation ou un changement de rôle est pris en compte au plus tard après ce délai.
 
-`message-service` démarre après `room-service` : avant chaque lecture ou écriture d'un message de salon, il demande à Room-Service (`http://room-service:3003/api/internal/channels/:id/access/:userId`) si l'utilisateur peut lire ou écrire dans le salon. Cette route interne est protégée par le secret partagé `INTERNAL_SERVICE_TOKEN` (`.env`, valeur de développement par défaut), transmis aux deux services, et n'est jamais relayée par Serveur-API.
+`message-service` démarre après `room-service` : avant chaque lecture ou écriture d'un message de salon, il demande à Room-Service (`http://room-service:3003/api/internal/channels/:id/access/:userId`) si l'utilisateur peut lire ou écrire dans le salon. Cette route interne est protégée par le secret partagé `INTERNAL_SERVICE_TOKEN` (`.env`, valeur de développement par défaut), transmis aux deux services, et n'est jamais relayée par Serveur-API. Message-Service mémorise chaque réponse `ROOM_ACCESS_CACHE_TTL_MS` (10 s par défaut) et l'oublie dès que Room-Service signale un changement du serveur concerné.
+
+### Fichiers partagés entre services
+Quelques fichiers sont copiés à l'identique dans plusieurs dépôts (`src/partage/`) : le client d'authentification (Room-Service, Message-Service) et la vérification des secrets de production (Room-Service, Message-Service, User-Config-Service). `scripts/verifier-fichiers-partages.sh` vérifie que les copies n'ont pas divergé :
+
+```bash
+./scripts/verifier-fichiers-partages.sh
+```
 
 ### Variables CORS
-Une seule variable dans `.env` : `CORS_ORIGINS` (origines séparées par des virgules). `docker-compose.yml` la transmet :
-- sous le nom `CORS_ALLOWED_ORIGINS` à Auth-Service (Rust);
-- sous le nom `CORS_ORIGINS` à Message-Service, User-Config-Service et Serveur-API (Node).
-
-Tous les services partagent donc toujours la même liste. Ne pas ajouter `CORS_ALLOWED_ORIGINS` dans `.env` : Compose l'ignorerait.
+Une seule variable dans `.env` : `CORS_ORIGINS` (origines séparées par des virgules), lue sous ce même nom par Auth-Service, Message-Service, User-Config-Service et Serveur-API. Tous les services partagent donc toujours la même liste.
 
 Au premier démarrage sur un volume vide, Infra crée les bases/rôles PostgreSQL. Chaque service exécute ensuite ses propres migrations au démarrage de son conteneur.
 
