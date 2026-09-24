@@ -3,6 +3,8 @@
 ## Principe
 Infra lance une seule instance PostgreSQL et crée quatre bases logiques avec un propriétaire distinct. **Les bases sont vides après l'initialisation d'Infra.** Chaque microservice applique ensuite ses propres migrations.
 
+Chaque base est fermée aux autres comptes (`REVOKE CONNECT, TEMPORARY ... FROM PUBLIC`) : le compte d'un service ne peut ouvrir que **sa** base (par défaut, PostgreSQL laisse tout compte se connecter à toutes les bases). Seuls le propriétaire et le superutilisateur (Adminer) y accèdent. Comme tout le script d'initialisation, cela ne s'applique qu'à un volume neuf : sur un volume existant, `docker compose down -v` (efface les données) ou exécuter une fois `REVOKE CONNECT, TEMPORARY ON DATABASE <base> FROM PUBLIC;` pour chaque base en superutilisateur.
+
 | Base | Propriétaire | Schéma métier géré par |
 |---|---|---|
 | `chatvardage_auth` | `auth_service` | Authentification |
