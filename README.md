@@ -32,6 +32,10 @@ Au premier démarrage, PostgreSQL crée automatiquement :
 
 Les bases sont volontairement **vides au départ**. Les tables sont créées par les migrations du service concerné (Prisma ou l'outil de migration choisi par ce service).
 
+## Passer en production
+
+`NODE_ENV=production` dans `.env` active, dans Authentification, Room-Service, Message-Service et User-Config-Service, un refus de démarrer avec les secrets de développement de `.env.example` (`JWT_SECRET`, `INTERNAL_SERVICE_TOKEN`, mots de passe PostgreSQL et Redis). Remplacer chacun par une vraie valeur (`openssl rand -hex 32`) ; le message d'erreur de chaque service liste ce qui manque.
+
 ## Connexions
 > ⚠️ Les identifiants ci-dessous (et ceux de `.env.example`) sont réservés au développement local. Ne jamais les réutiliser dans un environnement partagé ou de production.
 
@@ -121,6 +125,8 @@ Pour le C2, PostgreSQL reste la source de vérité. Redis/WebSocket servent au t
 Le Compose global démarre `auth-service` (3001) avant `room-service`, `message-service` et `user-config-service`, puis démarre `serveur-api` (3000) lorsque les quatre services sont sains. Rooms et Messages reçoivent le JWT du client puis valident la session courante auprès de `http://auth-service:3001/api/auth/me`. Pour User-Config, le Gateway valide lui-même la session auprès d'Auth et transmet uniquement un `x-user-id` de confiance. Le rôle reste la propriété du service Auth et n'est pas recopié dans le JWT.
 
 Pour l’environnement Docker local du contrôle, `room-service` est explicitement lancé avec `NODE_ENV=development`. Cela autorise l’URL HTTP interne `http://auth-service:3001` sur le réseau Docker privé. En production réelle, Room-Service conserve sa validation qui exige HTTPS. Le délai Room-Service est fourni avec `AUTH_TIMEOUT_MS`; Message-Service utilise `AUTH_SERVICE_TIMEOUT_MS`.
+
+`message-service` démarre après `room-service` : avant chaque lecture ou écriture d'un message de salon, il demande à Room-Service (`http://room-service:3003/api/internal/channels/:id/access/:userId`) si l'utilisateur peut lire ou écrire dans le salon. Cette route interne est protégée par le secret partagé `INTERNAL_SERVICE_TOKEN` (`.env`, valeur de développement par défaut), transmis aux deux services, et n'est jamais relayée par Serveur-API.
 
 ### Variables CORS
 Une seule variable dans `.env` : `CORS_ORIGINS` (origines séparées par des virgules). `docker-compose.yml` la transmet :

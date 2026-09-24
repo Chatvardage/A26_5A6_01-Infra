@@ -113,6 +113,8 @@ services:
     restart: unless-stopped
 
     environment:
+      # production : refuse de démarrer avec les secrets de dev (voir .env.example).
+      NODE_ENV: ${NODE_ENV:-development}
       PORT: 3001
 
       DATABASE_URL: >-
@@ -158,7 +160,7 @@ services:
     environment:
       # Environnement Docker local du C2 : les services communiquent sur le réseau privé
       # Compose en HTTP. Le Room-Service réserve l’exigence HTTPS à la production réelle.
-      NODE_ENV: development
+      NODE_ENV: ${NODE_ENV:-development}
       PORT: 3003
 
       DATABASE_URL: >-
@@ -167,6 +169,13 @@ services:
       AUTH_SERVICE_URL: http://auth-service:3001
       # Room-Service lit AUTH_TIMEOUT_MS : alimenté par AUTH_SERVICE_TIMEOUT_MS de .env.
       AUTH_TIMEOUT_MS: ${AUTH_SERVICE_TIMEOUT_MS:-3000}
+      # Secret partagé avec Message-Service pour /api/internal/* (accès aux
+      # salons). Jamais relayé par Serveur-API.
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-chatvardage_internal_dev}
+      # Prévenu de chaque changement de serveur (temps réel). Pas de
+      # depends_on : message-service dépend déjà de room-service, et un
+      # événement perdu au démarrage est sans gravité.
+      MESSAGE_SERVICE_URL: http://message-service:3004
 
     ports:
       - "127.0.0.1:3003:3003"
@@ -200,6 +209,8 @@ services:
     restart: unless-stopped
 
     environment:
+      # production : refuse de démarrer avec les secrets de dev (voir .env.example).
+      NODE_ENV: ${NODE_ENV:-development}
       PORT: 3004
 
       DATABASE_URL: >-
@@ -209,6 +220,10 @@ services:
       AUTH_SERVICE_URL: http://auth-service:3001
       AUTH_SERVICE_TIMEOUT_MS: ${AUTH_SERVICE_TIMEOUT_MS:-3000}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
+      # Droits d'accès aux salons : route interne de Room-Service.
+      ROOM_SERVICE_URL: http://room-service:3003
+      ROOM_SERVICE_TIMEOUT_MS: ${ROOM_SERVICE_TIMEOUT_MS:-3000}
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-chatvardage_internal_dev}
 
     ports:
       - "127.0.0.1:3004:3004"
@@ -231,6 +246,8 @@ services:
         condition: service_healthy
       auth-service:
         condition: service_healthy
+      room-service:
+        condition: service_healthy
 
     networks:
       - chatvardage
@@ -244,6 +261,8 @@ services:
     restart: unless-stopped
 
     environment:
+      # production : refuse de démarrer avec les secrets de dev (voir .env.example).
+      NODE_ENV: ${NODE_ENV:-development}
       PORT: 3005
 
       DATABASE_URL: >-
