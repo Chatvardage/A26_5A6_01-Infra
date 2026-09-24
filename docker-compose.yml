@@ -124,6 +124,11 @@ services:
       JWT_DUREE_DE_VIE_HEURES: ${JWT_DUREE_DE_VIE_HEURES:-24}
       RUST_LOG: ${RUST_LOG:-info}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
+      # Compte supprimé : ces services effacent ses données
+      # (DELETE /api/internal/users/:id). Pas de depends_on : l'appel est
+      # fait en tâche de fond, avec nouvelles tentatives.
+      SERVICES_COMPTE_SUPPRIME_URLS: http://room-service:3003,http://message-service:3004,http://user-config-service:3005
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-chatvardage_internal_dev}
 
     ports:
       - "127.0.0.1:3001:3001"
@@ -269,7 +274,8 @@ services:
         postgresql://${CONFIG_DB_USER:-config_service}:${CONFIG_DB_PASSWORD:-config_service_dev}@postgres:5432/${CONFIG_DB:-chatvardage_config}?schema=public
 
       # Pas d'appel à Auth-Service : Serveur-API valide le jeton et transmet
-      # l'identité dans l'en-tête x-user-id.
+      # l'identité dans l'en-tête x-user-id, crue seulement avec ce secret.
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-chatvardage_internal_dev}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
 
     ports:
@@ -289,8 +295,6 @@ services:
 
     depends_on:
       postgres:
-        condition: service_healthy
-      auth-service:
         condition: service_healthy
 
     networks:
@@ -357,6 +361,8 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
       TRUST_PROXY: ${TRUST_PROXY:-false}
       AUTH_CACHE_TTL_MS: ${AUTH_CACHE_TTL_MS:-10000}
+      # Joint aux seules requêtes vers User-Config (avec x-user-id).
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-chatvardage_internal_dev}
 
     ports:
       - "127.0.0.1:3000:3000"
