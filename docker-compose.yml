@@ -309,6 +309,7 @@ services:
     restart: unless-stopped
 
     environment:
+      NODE_ENV: ${NODE_ENV:-development}
       PORT: 3000
       COOKIE_SECRET: ${DASHBOARD_COOKIE_SECRET:-dashboard_cookie_secret_for_local_development}
       AUTH_SERVICE_URL: http://auth-service:3001
