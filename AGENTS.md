@@ -82,3 +82,9 @@ Ces décisions ne remplacent pas les validations obligatoires avant PR indiquée
 - Syntaxe des quatre scripts shell vérifiée avec `sh -n`; `./scripts/verifier-fichiers-partages.sh` confirme que les fichiers partagés sont identiques. Les scripts locaux ont été remis en LF et rendus exécutables conformément à Git et `.gitattributes`; cela ne change pas leur contenu versionné.
 - La construction du Dashboard réussit, mais affiche des avertissements `EBADENGINE` : son image Node 20 est plus ancienne que la version demandée par certaines dépendances. Ce point appartient au dépôt Dashboard et reste à traiter séparément.
 - La stack de validation et ses volumes temporaires sont supprimés après les contrôles.
+
+### Correction du CI après validation locale
+
+Le run GitHub Actions `36891758599` sur `3c301c2` a échoué à l’étape `docker compose --env-file .env.example config -q` : le modèle contient volontairement un `DASHBOARD_SESSION_SECRET` vide. La validation de la stack avec un secret fourni ne couvrait pas cette invocation du workflow.
+
+Le job `compose-et-scripts` génère maintenant un secret temporaire avec `openssl rand -hex 32`, limité à la commande de validation Compose. Aucun secret réel ni valeur fixe ne doit être ajouté à `.env.example` pour faire passer le CI. L’invocation corrigée de Compose et ShellCheck sur les quatre scripts passent localement. Le prochain run GitHub Actions reste à confirmer après publication du commit.

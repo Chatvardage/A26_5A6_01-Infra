@@ -24,7 +24,10 @@ jobs:
       - uses: actions/checkout@v4
       # Valide la syntaxe et l'interpolation (les dépôts des services ne sont
       # pas nécessaires : aucune image n'est construite).
-      - run: docker compose --env-file .env.example config -q
+      - name: Valider Compose avec un secret temporaire
+        run: |
+          DASHBOARD_SESSION_SECRET="$(openssl rand -hex 32)" \
+            docker compose --env-file .env.example config -q
       # shellcheck est préinstallé sur les runners ubuntu-latest.
       - run: shellcheck scripts/*.sh postgres/init/*.sh
 
