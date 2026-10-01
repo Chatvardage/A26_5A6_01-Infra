@@ -69,4 +69,16 @@ Les décisions suivantes reposent sur le code des services au moment de cette re
 - **Ne pas documenter de nouvelles sessions HTTP pour User-Config-Service** dans le README ou dans la documentation d’architecture : aucun mécanisme de ce type ne figure dans son code. La suppression de la variable conserve le mécanisme existant.
 - **Ne pas retenir la qualification de faille critique pour la valeur vide à elle seule.** Dans `dashboard-chatvardage/src/main.ts`, `resoudreSecrets()` génère des secrets aléatoires en développement/test lorsque la valeur est absente et refuse une valeur absente ou trop courte en production. Le Dashboard ne signe donc pas ses sessions avec une chaîne vide dans ces cas. L’exigence ajoutée dans Compose clarifie la configuration en amont.
 
-Ces décisions ne remplacent pas les validations obligatoires avant PR indiquées plus haut. La configuration Compose a été vérifiée avec une valeur présente et avec une valeur vide (refus attendu); la validation complète de la stack reste à effectuer avant de déclarer une PR prête.
+Ces décisions ne remplacent pas les validations obligatoires avant PR indiquées plus haut.
+
+### Validation effectuée le 1er octobre 2026
+
+- Configuration Compose valide avec `DASHBOARD_SESSION_SECRET` renseigné; refus attendu avec une valeur vide.
+- Stack construite et démarrée avec `docker compose up -d --build --wait --wait-timeout 180` après `docker compose down -v`, dans le projet isolé `chatvardage-validation-6622a39`. La configuration de validation dérive de `docker compose --env-file .env.example config --format json`; seuls le nom du projet, les noms explicites des conteneurs/réseaux/volumes et les ports publiés ont été adaptés pour isoler la stack. Aucun port hôte n’est publié pendant cette validation; les accès depuis l’hôte ne sont donc pas couverts. Les volumes locaux habituels sont préservés.
+- `docker compose ps` : PostgreSQL, Redis, Auth, Room, Message, User-Config, Serveur-API et Dashboard sont `healthy`; Adminer est démarré.
+- `./scripts/healthcheck.sh` : quatre bases présentes, Redis répond `PONG`, cinq services sains et `/api/health/upstreams` renvoie `ok` pour tous les services.
+- Logs PostgreSQL/Redis examinés : initialisation terminée et services prêts. Les trois migrations Prisma Room-Service ont été réellement appliquées sur la base neuve; une nouvelle exécution de `npx prisma migrate deploy` confirme qu’aucune migration ne reste à appliquer.
+- Room-Service validé dans une image Docker Node 22 construite avec la cible `build` de son Dockerfile (`npm ci` dans la cible de dépendances) : `npx prisma generate`, `npm run lint`, `npm test -- --runInBand` (196 tests), `npm run test:e2e -- --runInBand` (14 tests), `npm run build` et `npm run test:cov -- --runInBand` passent. Couverture : 100 % Statements, Branches, Functions et Lines.
+- Syntaxe des quatre scripts shell vérifiée avec `sh -n`; `./scripts/verifier-fichiers-partages.sh` confirme que les fichiers partagés sont identiques. Les scripts locaux ont été remis en LF et rendus exécutables conformément à Git et `.gitattributes`; cela ne change pas leur contenu versionné.
+- La construction du Dashboard réussit, mais affiche des avertissements `EBADENGINE` : son image Node 20 est plus ancienne que la version demandée par certaines dépendances. Ce point appartient au dépôt Dashboard et reste à traiter séparément.
+- La stack de validation et ses volumes temporaires sont supprimés après les contrôles.
