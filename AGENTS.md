@@ -59,3 +59,14 @@ Attention : cela efface les données locales.
 Tout port publié dans `docker-compose.yml` doit être lié à `127.0.0.1` (`"127.0.0.1:PORT:PORT"`), jamais à toutes les interfaces.
 
 Les origines CORS viennent d'une seule variable de `.env`, `CORS_ORIGINS`. Tous les services, Auth-Service compris, la lisent sous ce même nom. Ne pas réintroduire une seconde variable CORS dans `.env.example`.
+
+## Revue Infra — adaptation du Dashboard : recommandations non retenues
+
+Les décisions suivantes reposent sur le code des services au moment de cette revue :
+
+- **Ne pas ajouter de secret de session connu par défaut**, ni dans Compose ni comme valeur de développement dans `.env.example`. `DASHBOARD_SESSION_SECRET` reste vide dans le modèle, avec une instruction de génération (`openssl rand -hex 32`). Compose exige une valeur non vide avec `${DASHBOARD_SESSION_SECRET:?…}`. Cela rend la configuration explicite et évite de fournir un secret public réutilisable.
+- **Ne pas créer `USER_CONFIG_SESSION_SECRET` et ne pas renommer le secret du Dashboard en secret partagé.** User-Config-Service ne consomme pas `SESSION_SECRET`; son identité HTTP provient de `x-user-id`, protégé par `INTERNAL_SERVICE_TOKEN`. L’injection inutile a été supprimée. `DASHBOARD_SESSION_SECRET` ne concerne donc que le Dashboard et son nom reste approprié.
+- **Ne pas documenter de nouvelles sessions HTTP pour User-Config-Service** dans le README ou dans la documentation d’architecture : aucun mécanisme de ce type ne figure dans son code. La suppression de la variable conserve le mécanisme existant.
+- **Ne pas retenir la qualification de faille critique pour la valeur vide à elle seule.** Dans `dashboard-chatvardage/src/main.ts`, `resoudreSecrets()` génère des secrets aléatoires en développement/test lorsque la valeur est absente et refuse une valeur absente ou trop courte en production. Le Dashboard ne signe donc pas ses sessions avec une chaîne vide dans ces cas. L’exigence ajoutée dans Compose clarifie la configuration en amont.
+
+Ces décisions ne remplacent pas les validations obligatoires avant PR indiquées plus haut. La configuration Compose a été vérifiée avec une valeur présente et avec une valeur vide (refus attendu); la validation complète de la stack reste à effectuer avant de déclarer une PR prête.
