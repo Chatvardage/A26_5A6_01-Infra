@@ -310,6 +310,8 @@ services:
     environment:
       NODE_ENV: ${NODE_ENV:-development}
       PORT: 3000
+      # Marqueur local : resoudreSecrets() doit le remplacer par un secret aléatoire
+      # en dev/test et le rejeter hors de ces modes (voir AGENTS.md, secret de cookie).
       COOKIE_SECRET: ${DASHBOARD_COOKIE_SECRET:-dashboard_cookie_secret_for_local_development}
       SESSION_SECRET: ${DASHBOARD_SESSION_SECRET:?Definir DASHBOARD_SESSION_SECRET dans .env}
       AUTH_SERVICE_URL: http://auth-service:3001

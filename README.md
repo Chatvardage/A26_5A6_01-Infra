@@ -20,8 +20,10 @@ Le Compose orchestre Auth, Room, Message, User-Config, Dashboard et Serveur-API 
 
 ```bash
 cp .env.example .env
-# Generer le secret, puis renseigner DASHBOARD_SESSION_SECRET dans .env :
+# Générer le secret :
 openssl rand -hex 32
+# Copier la sortie dans .env : DASHBOARD_SESSION_SECRET=<valeur générée>
+# Enregistrer .env avant de lancer Compose.
 docker compose up --build -d
 docker compose ps
 ```
