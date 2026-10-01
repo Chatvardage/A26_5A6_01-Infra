@@ -20,6 +20,10 @@ Le Compose orchestre Auth, Room, Message, User-Config, Dashboard et Serveur-API 
 
 ```bash
 cp .env.example .env
+# Générer le secret :
+openssl rand -hex 32
+# Copier la sortie dans .env : DASHBOARD_SESSION_SECRET=<valeur générée>
+# Enregistrer .env avant de lancer Compose.
 docker compose up --build -d
 docker compose ps
 ```
@@ -36,6 +40,8 @@ Les bases sont volontairement **vides au départ**. Les tables sont créées par
 
 `NODE_ENV=production` dans `.env` active, dans Authentification, Room-Service, Message-Service et User-Config-Service, un refus de démarrer avec les secrets de développement de `.env.example` (`JWT_SECRET`, `INTERNAL_SERVICE_TOKEN`, mots de passe PostgreSQL et Redis). Remplacer chacun par une vraie valeur (`openssl rand -hex 32`) ; le message d'erreur de chaque service liste ce qui manque.
 
+Le Dashboard exige aussi deux secrets distincts de 32 caracteres minimum : `DASHBOARD_COOKIE_SECRET` et `DASHBOARD_SESSION_SECRET`. Generer chacun avec `openssl rand -hex 32`. Compose refuse de demarrer si `DASHBOARD_SESSION_SECRET` est absent ou vide.
+
 ## Connexions
 > ⚠️ Les identifiants ci-dessous (et ceux de `.env.example`) sont réservés au développement local. Ne jamais les réutiliser dans un environnement partagé ou de production.
 
@@ -46,7 +52,7 @@ Depuis un service lancé **dans Docker** :
 - Config : `postgresql://config_service:config_service_dev@postgres:5432/chatvardage_config`
 - Redis : `redis://:chatvardage_redis_dev@redis:6379`
 
-Tous les ports publiés (PostgreSQL `5432`, Redis `6379`, Adminer `8080`, Gateway `3000`, Auth `3001`, Dashboard `3002`, Room `3003`, Message `3004`, User-Config `3005`) sont liés à `127.0.0.1` uniquement : ils restent accessibles aux outils locaux, mais ne sont pas exposés aux autres machines du réseau.
+Tous les ports publiés (PostgreSQL `5432`, Redis `6379`, Adminer `8081`, Gateway `3000`, Auth `3001`, Dashboard `3002`, Room `3003`, Message `3004`, User-Config `3005`) sont liés à `127.0.0.1` uniquement : ils restent accessibles aux outils locaux, mais ne sont pas exposés aux autres machines du réseau.
 
 Depuis un service lancé **sur la machine hôte**, remplacer `postgres` par `localhost`. Exemple Room-Service :
 
@@ -149,7 +155,7 @@ Le service `adminer` est un outil générique d'inspection de PostgreSQL pour le
 
 > ⚠️ Les identifiants ci-dessous sont ceux du superutilisateur PostgreSQL de développement (`POSTGRES_SUPERUSER`/`POSTGRES_SUPERPASS`).
 
-- Se rendre sur http://localhost:8080
+- Se rendre sur http://localhost:8081
 - Système : « PostgreSQL »
 - Serveur : `postgres`
 - Utilisateur : `postgres`
