@@ -312,6 +312,7 @@ services:
       NODE_ENV: ${NODE_ENV:-development}
       PORT: 3000
       COOKIE_SECRET: ${DASHBOARD_COOKIE_SECRET:-dashboard_cookie_secret_for_local_development}
+      SESSION_SECRET: ${DASHBOARD_SESSION_SECRET:-}
       AUTH_SERVICE_URL: http://auth-service:3001
       ROOM_SERVICE_URL: http://room-service:3003
       MESSAGE_SERVICE_URL: http://message-service:3004
