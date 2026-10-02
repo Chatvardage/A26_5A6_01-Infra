@@ -34,8 +34,12 @@ echo "== PostgreSQL =="
 docker compose exec -T postgres sh -c 'pg_isready -U "$POSTGRES_USER" -d postgres'
 
 echo "== Databases =="
-docker compose exec -T postgres sh -c 'psql -U "$POSTGRES_USER" -d postgres -Atc "$1"' _ \
-  "SELECT datname FROM pg_database WHERE datname LIKE 'chatvardage_%' ORDER BY datname;"
+docker compose exec -T postgres sh -eu -c '
+  for db in "$AUTH_DB" "$ROOMS_DB" "$MESSAGES_DB" "$CONFIG_DB"; do
+    psql -U "$POSTGRES_USER" -d "$db" -v ON_ERROR_STOP=1 -Atc "SELECT 1" >/dev/null
+    echo "$db : accessible"
+  done
+'
 
 echo "== Redis =="
 # REDISCLI_AUTH est défini dans le service redis de docker-compose.yml.
@@ -55,7 +59,7 @@ echo "== Microservices =="
 # État rapporté par les healthchecks de docker-compose.yml. On vérifie tous les
 # services avant d'échouer, pour afficher un diagnostic complet.
 failed=0
-for service in auth-service room-service message-service user-config-service serveur-api; do
+for service in auth-service room-service message-service user-config-service serveur-api dashboard; do
   container_id=$(docker compose ps -q "$service")
   if [ -z "$container_id" ]; then
     status="non démarré"
