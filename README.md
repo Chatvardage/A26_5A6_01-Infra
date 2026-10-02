@@ -4,37 +4,101 @@ Infrastructure Docker du Contrôle 2. Ce dépôt fournit **PostgreSQL, Redis, le
 
 
 ## Démarrage
-Prérequis : Docker + Docker Compose, et **tous les dépôts clonés côte à côte** dans un même dossier parent. Le `docker-compose.yml` construit les microservices depuis des chemins relatifs (`../A26_5A6_01-Authentification`, `../A26_5A6_01-Room-Service`, etc.) : si un dépôt manque, `docker compose up --build` échoue.
+
+### Prérequis
+
+- Docker Desktop (ou Docker Engine) avec Docker Compose.
+- Tous les dépôts Chatvardage clonés **côte à côte** dans le même dossier parent.
+- Sous Windows, PowerShell est utilisé pour générer le fichier `.env`.
+- Sous Linux/macOS, `openssl` est requis par le script de génération du `.env`.
+
+Le `docker-compose.yml` construit les services depuis des chemins relatifs (`../A26_5A6_01-Authentification`, `../A26_5A6_01-Room-Service`, etc.). Si un dépôt requis manque, `docker compose up --build` échoue.
 
 ```text
 Chatvardage/
-├── A26_5A6_01-Infra/                 # ce dépôt (lancer docker compose ici)
+├── A26_5A6_01-Infra/                 # lancer Docker Compose ici
 ├── A26_5A6_01-Authentification/
 ├── A26_5A6_01-Room-Service/
 ├── A26_5A6_01-Message-Service/
 ├── A26_5A6_01-User-Config-Service/
-└── A26_5A6_01-Serveur-API/
+├── A26_5A6_01-Serveur-API/
+└── A26_5A6_01-Dashboard/
 ```
 
-Le Compose orchestre Auth, Room, Message, User-Config, Dashboard et Serveur-API avec leurs healthchecks. Le Gateway est exposé sur le port `3000` et le Dashboard sur le port `3002`.
+Le Compose orchestre PostgreSQL, Redis, Auth, Room, Message, User-Config, Dashboard et Serveur-API avec leurs healthchecks. Le Gateway est exposé sur `127.0.0.1:3000` et le Dashboard sur `127.0.0.1:3002`.
+
+### 1. Générer le fichier `.env`
+
+Ne copiez pas simplement `.env.example` vers `.env`. Utilisez le script fourni : il conserve la configuration du modèle et génère des secrets aléatoires distincts pour PostgreSQL, Redis, JWT, les communications internes et le Dashboard. Le fichier `.env` généré ne doit jamais être committé.
+
+**Windows — PowerShell**
+
+```powershell
+cd A26_5A6_01-Infra
+.\scripts\generer-env.ps1
+```
+
+**Linux/macOS**
 
 ```bash
-cp .env.example .env
-# Générer le secret :
-openssl rand -hex 32
-# Copier la sortie dans .env : DASHBOARD_SESSION_SECRET=<valeur générée>
-# Enregistrer .env avant de lancer Compose.
+cd A26_5A6_01-Infra
+chmod +x scripts/generer-env.sh
+./scripts/generer-env.sh
+```
+
+Si `.env` existe déjà, le script s'arrête volontairement afin de ne pas remplacer les secrets existants. Pour régénérer volontairement le fichier :
+
+```powershell
+# Windows
+.\scripts\generer-env.ps1 -Force
+```
+
+```bash
+# Linux/macOS
+./scripts/generer-env.sh --force
+```
+
+> **Attention :** après une régénération des mots de passe sur une stack qui possède déjà des volumes, réinitialisez les volumes avant de redémarrer afin que PostgreSQL/Redis soient initialisés avec les nouveaux identifiants. Utilisez `docker compose down -v` uniquement si vous acceptez de supprimer les données locales.
+
+### 2. Démarrer toute la stack
+
+Depuis `A26_5A6_01-Infra` :
+
+```bash
 docker compose up --build -d
 docker compose ps
 ```
 
 Au premier démarrage, PostgreSQL crée automatiquement :
+
 - `chatvardage_auth`, propriétaire `auth_service`
 - `chatvardage_rooms`, propriétaire `room_service`
 - `chatvardage_messages`, propriétaire `message_service`
 - `chatvardage_config`, propriétaire `config_service`
 
-Les bases sont volontairement **vides au départ**. Les tables sont créées par les migrations du service concerné (Prisma ou l'outil de migration choisi par ce service).
+Les tables métier sont ensuite créées par les migrations propres à chaque microservice. Infra ne crée pas les tables applicatives.
+
+### 3. Vérifier que la stack est prête
+
+```bash
+docker compose ps
+curl http://localhost:3000/api/health
+curl http://localhost:3000/api/health/upstreams
+```
+
+`/api/health/upstreams` doit rapporter `auth`, `room`, `message` et `userConfig` comme disponibles lorsque la stack est prête.
+
+Sous Linux/macOS, la vérification automatisée peut aussi être lancée avec :
+
+```bash
+./scripts/healthcheck.sh
+```
+
+### 4. Accéder aux services
+
+- API Gateway : `http://localhost:3000`
+- Dashboard administrateur : `http://localhost:3002/administration`
+- Adminer (développement) : `http://localhost:8081`
 
 ## Passer en production
 
@@ -43,21 +107,30 @@ Les bases sont volontairement **vides au départ**. Les tables sont créées par
 Le Dashboard exige aussi deux secrets distincts de 32 caracteres minimum : `DASHBOARD_COOKIE_SECRET` et `DASHBOARD_SESSION_SECRET`. Generer chacun avec `openssl rand -hex 32`. Compose refuse de demarrer si `DASHBOARD_SESSION_SECRET` est absent ou vide.
 
 ## Connexions
-> ⚠️ Les identifiants ci-dessous (et ceux de `.env.example`) sont réservés au développement local. Ne jamais les réutiliser dans un environnement partagé ou de production.
 
-Depuis un service lancé **dans Docker** :
-- Auth : `postgresql://auth_service:auth_service_dev@postgres:5432/chatvardage_auth`
-- Room : `postgresql://room_service:room_service_dev@postgres:5432/chatvardage_rooms`
-- Message : `postgresql://message_service:message_service_dev@postgres:5432/chatvardage_messages`
-- Config : `postgresql://config_service:config_service_dev@postgres:5432/chatvardage_config`
-- Redis : `redis://:chatvardage_redis_dev@redis:6379`
+> ⚠️ **Sécurité :** les identifiants et secrets de `.env.example` sont réservés au développement local. Ne les réutilisez jamais dans un environnement partagé ou de production. Le fichier `.env` généré est local, sensible et ne doit jamais être committé.
 
-Tous les ports publiés (PostgreSQL `5432`, Redis `6379`, Adminer `8081`, Gateway `3000`, Auth `3001`, Dashboard `3002`, Room `3003`, Message `3004`, User-Config `3005`) sont liés à `127.0.0.1` uniquement : ils restent accessibles aux outils locaux, mais ne sont pas exposés aux autres machines du réseau.
+Les mots de passe sont générés dans `.env`; les exemples de `.env.example` ne doivent pas être considérés comme les identifiants de la stack après exécution de `generer-env`. Docker Compose injecte automatiquement les bonnes valeurs dans les services.
 
-Depuis un service lancé **sur la machine hôte**, remplacer `postgres` par `localhost`. Exemple Room-Service :
+Depuis les conteneurs, les services utilisent les noms Docker `postgres` et `redis`. Depuis la machine hôte, les ports de développement sont publiés uniquement sur `127.0.0.1`.
 
-```env
-DATABASE_URL="postgresql://room_service:room_service_dev@localhost:5432/chatvardage_rooms?schema=public"
+Ports locaux : PostgreSQL `5432`, Redis `6379`, Adminer `8081`, Gateway `3000`, Auth `3001`, Dashboard `3002`, Room `3003`, Message `3004`, User-Config `3005`.
+
+Pour lancer exceptionnellement un microservice sur la machine hôte plutôt que dans Docker, utilisez `localhost` à la place du nom de service Docker et reprenez les identifiants générés dans `.env`.
+
+Les variables à reprendre sont notamment :
+
+- Auth : `AUTH_DB_USER`, `AUTH_DB_PASSWORD`, `AUTH_DB`
+- Room : `ROOMS_DB_USER`, `ROOMS_DB_PASSWORD`, `ROOMS_DB`
+- Message : `MESSAGES_DB_USER`, `MESSAGES_DB_PASSWORD`, `MESSAGES_DB`
+- User-Config : `CONFIG_DB_USER`, `CONFIG_DB_PASSWORD`, `CONFIG_DB`
+- Redis : `REDIS_PASSWORD`
+
+Exemple de forme pour un service lancé sur l'hôte :
+
+```text
+DATABASE_URL=postgresql://<USER>:<PASSWORD>@localhost:5432/<DATABASE>
+REDIS_URL=redis://:<REDIS_PASSWORD>@localhost:6379
 ```
 
 ## Tester avec Room-Service
@@ -123,7 +196,7 @@ Cela supprime les volumes PostgreSQL/Redis et recrée les quatre bases vides. Le
 ## Règle de propriété des données
 **Infra crée les bases et les comptes SQL. Les microservices créent et font évoluer leurs tables.** Il ne faut pas dupliquer les schémas ou migrations dans Infra.
 
-Pour le C2, PostgreSQL reste la source de vérité. Redis/WebSocket servent au temps réel des messages privés après une écriture réussie en base. Les messages de salons restent hors de la persistance C2.
+PostgreSQL reste la source de vérité. Redis/WebSocket servent à la diffusion temps réel après une écriture réussie en base. Le projet persiste également les messages de salons, même si cette fonctionnalité dépasse le minimum demandé au Contrôle 2.
 
 
 ## Authentification intégrée
@@ -158,6 +231,6 @@ Le service `adminer` est un outil générique d'inspection de PostgreSQL pour le
 - Se rendre sur http://localhost:8081
 - Système : « PostgreSQL »
 - Serveur : `postgres`
-- Utilisateur : `postgres`
-- Mot de passe : `postgres`
+- Utilisateur : valeur de `POSTGRES_SUPERUSER` dans `.env`
+- Mot de passe : valeur de `POSTGRES_SUPERPASS` dans `.env`
 - Base : sélectionner la base souhaitée dans le menu déroulant (ou laisser vide pour voir toutes les bases)
