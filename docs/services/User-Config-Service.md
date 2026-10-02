@@ -2,7 +2,7 @@
 
 Microservice de configuration utilisateur.
 
-Ce dépôt contient uniquement le service responsable des préférences personnelles de chaque utilisateur : alias, thème, langue, statut de présence et mode de notification. L'authentification, les salons et les messages ne sont pas gérés par ce service.
+Ce dépôt contient uniquement le service responsable des préférences personnelles de chaque utilisateur : alias, avatar, thème, langue, statut de présence et mode de notification. L'authentification, les salons et les messages ne sont pas gérés par ce service.
 
 ## Technologies
 
@@ -130,7 +130,7 @@ Il démarre :
 
 Ne pas lancer ce PostgreSQL en même temps que celui d'`Infra` : les deux écoutent sur le port `5432` et entreraient en conflit.
 
-Dans l'environnement final de l'équipe, ce service doit plutôt être référencé depuis le `docker-compose.yml` global du dépôt `Infra`, avec les autres microservices.
+Dans l'environnement complet, ce service est lancé par le `docker-compose.yml` global du dépôt `Infra`, avec les autres microservices.
 
 ## Variables d'environnement
 

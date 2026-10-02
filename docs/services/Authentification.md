@@ -65,7 +65,7 @@ et [Installation et lancement](#installation-et-lancement)).
 | **Axum** | Framework web asynchrone, API simple, bonne documentation, très utilisé pour des services HTTP en Rust — un bon choix pour un premier projet Rust. |
 | **PostgreSQL + SQLx** | Base relationnelle robuste pour des données structurées (comptes, rôles). SQLx est asynchrone (compatible avec Axum/Tokio) et n'exige pas d'ORM lourd. |
 | **Prisma (migrations uniquement)** | Standardise la gestion des migrations de schéma avec le reste de l'équipe (le Room-Service l'utilise aussi) — la CLI Prisma est indépendante du langage du service qui l'utilise. Aucun client Prisma généré n'est utilisé au runtime : SQLx reste le seul point d'accès aux données depuis le code Rust. |
-| **Port** (`UtilisateurRepositoryPort`) | Le code métier ne dépend que d'une interface (`domain::ports::UtilisateurRepositoryPort`), pas directement de PostgreSQL — même principe que `ChatGateway` côté frontend. Une seule implémentation en production, `PgUtilisateurRepository` (SQLx) ; il n'y a pas de mode mock exposé à l'exécution. Un second dépôt en mémoire (`FakeUtilisateurRepository`) existe, mais uniquement compilé en mode test (`#[cfg(test)]`) pour les tests HTTP de bout en bout — voir [Lancer les tests](#lancer-les-tests). |
+| **Port** (`UtilisateurRepositoryPort`) | Le code métier ne dépend que d'une interface (`domain::ports::UtilisateurRepositoryPort`), pas directement de PostgreSQL — même principe que le gateway unique (`RealGatewayRuntime`) côté frontend. Une seule implémentation en production, `PgUtilisateurRepository` (SQLx) ; il n'y a pas de mode mock exposé à l'exécution. Un second dépôt en mémoire (`FakeUtilisateurRepository`) existe, mais uniquement compilé en mode test (`#[cfg(test)]`) pour les tests HTTP de bout en bout — voir [Lancer les tests](#lancer-les-tests). |
 | **Argon2id** | Algorithme de hachage de mot de passe recommandé actuellement (résiste mieux aux attaques par GPU que bcrypt/MD5/SHA simple), calibré explicitement à 19 Mio, 2 itérations et 1 voie. Ses calculs CPU-bound sont exécutés dans le pool bloquant de Tokio afin de préserver les workers HTTP. |
 | **JWT (jsonwebtoken)** | Chaque requête porte un jeton signé, dont la signature et l'expiration sont vérifiées avant de relire l'utilisateur en base. Le rôle ne fait pas partie du jeton et doit toujours être lu depuis ce service; une suppression ou un changement de rôle prend donc effet immédiatement, sans stockage de session. |
 | **Docker multi-stage** | Une étape compile le binaire Rust avec `rust:1.88.0-slim-bookworm`, une autre installe la CLI Prisma avec `node:22-bookworm-slim` (Node.js 22, comme les autres services ; Prisma figé à la version exacte) et exécute `npx prisma generate` ; l'image finale embarque le binaire Rust compilé, Node.js et `prisma/` pour exécuter `npx prisma migrate deploy` au démarrage avant de lancer le binaire — même séquence que les microservices Node de l'équipe (voir [Installation et lancement](#installation-et-lancement)), adaptée à un runtime Rust. |
@@ -126,7 +126,7 @@ uniquement l'architecture interne de ce service.
 ## Migrations de la base de données (Prisma)
 
 Ce service possède la source de vérité du schéma de la table
-`utilisateurs`, défini dans [`prisma/schema.prisma`](https://github.com/Chatvardage/A26_5A6_01-Authentification/blob/develop/prisma/schema.prisma)
+`utilisateurs`, défini dans [`prisma/schema.prisma`](https://github.com/Chatvardage/A26_5A6_01-Authentification/blob/main/prisma/schema.prisma)
 et versionné avec des migrations dans `prisma/migrations/` — même
 mécanisme que le Room-Service de l'équipe (voir son `AGENTS.md`). Prisma
 ne sert **qu'à** définir le schéma et exécuter les migrations : le code
@@ -436,7 +436,7 @@ chiffre, ce qui n'apporterait aucune garantie réelle.
 ## Endpoints de l'API
 
 Documentation complète (requêtes, réponses, codes d'erreur) dans
-[`docs/API.md`](https://github.com/Chatvardage/A26_5A6_01-Authentification/blob/develop/docs/API.md). Résumé :
+[`docs/API.md`](https://github.com/Chatvardage/A26_5A6_01-Authentification/blob/main/docs/API.md). Résumé :
 
 | Méthode | Route | Protégée | Description |
 |---------|-------|----------|--------------|
@@ -448,6 +448,7 @@ Documentation complète (requêtes, réponses, codes d'erreur) dans
 | DELETE | `/api/auth/me` | oui | Supprimer son propre compte (les autres services sont prévenus) |
 | POST | `/api/auth/logout-all` | oui | Se déconnecter partout (invalide tous ses jetons) |
 | GET | `/api/users/lookup` | oui (tout utilisateur, pas seulement admin) | Résoudre `{id -> pseudo}` en lot pour d'autres comptes |
+| GET | `/api/users/search` | oui (tout utilisateur, pas seulement admin) | Chercher des comptes par début de pseudo (`{id, pseudo}` seulement) |
 | GET | `/api/users` | admin | Lister les comptes |
 | POST | `/api/users` | admin | Créer un compte |
 | GET | `/api/users/:id` | admin | Consulter un compte |

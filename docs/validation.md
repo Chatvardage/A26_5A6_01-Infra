@@ -13,7 +13,8 @@ Suivre exactement le README (secret de session inclus), construire les images, a
 ```bash
 docker compose config -q
 docker compose up --build -d --wait --wait-timeout 240
-docker compose ps./scripts/healthcheck.sh
+docker compose ps
+./scripts/healthcheck.sh
 docker compose logs --no-color --tail=100 postgres redis
 ```
 

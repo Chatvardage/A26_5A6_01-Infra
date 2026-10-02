@@ -32,7 +32,7 @@ docker compose ps
 ./scripts/healthcheck.sh
 docker compose logs --no-color --tail=100 postgres redis
 ```
-Vérifier que PostgreSQL et Redis sont `healthy`. `./scripts/healthcheck.sh` vérifie aussi les cinq microservices et `/api/health/upstreams` du Gateway ; `./scripts/healthcheck.sh --infra` se limite à PostgreSQL et Redis.
+Vérifier que PostgreSQL et Redis sont `healthy`. `./scripts/healthcheck.sh` vérifie aussi les six services (Auth, Room, Message, User-Config, Gateway, Dashboard) et `/api/health/upstreams` du Gateway ; `./scripts/healthcheck.sh --infra` se limite à PostgreSQL et Redis.
 
 Puis valider au moins une migration réelle d'un microservice contre une base neuve. Pour Room-Service :
 ```bash
@@ -76,7 +76,7 @@ Ces décisions ne remplacent pas les validations obligatoires avant PR indiquée
 - Configuration Compose valide avec `DASHBOARD_SESSION_SECRET` renseigné; refus attendu avec une valeur vide.
 - Stack construite et démarrée avec `docker compose up -d --build --wait --wait-timeout 180` après `docker compose down -v`, dans le projet isolé `chatvardage-validation-6622a39`. La configuration de validation dérive de `docker compose --env-file .env.example config --format json`; seuls le nom du projet, les noms explicites des conteneurs/réseaux/volumes et les ports publiés ont été adaptés pour isoler la stack. Aucun port hôte n’est publié pendant cette validation; les accès depuis l’hôte ne sont donc pas couverts. Les volumes locaux habituels sont préservés.
 - `docker compose ps` : PostgreSQL, Redis, Auth, Room, Message, User-Config, Serveur-API et Dashboard sont `healthy`; Adminer est démarré.
-- `./scripts/healthcheck.sh` : quatre bases présentes, Redis répond `PONG`, cinq services sains et `/api/health/upstreams` renvoie `ok` pour tous les services.
+- `./scripts/healthcheck.sh` : quatre bases présentes, Redis répond `PONG`, six services sains et `/api/health/upstreams` renvoie `ok` pour tous les services.
 - Logs PostgreSQL/Redis examinés : initialisation terminée et services prêts. Les trois migrations Prisma Room-Service ont été réellement appliquées sur la base neuve; une nouvelle exécution de `npx prisma migrate deploy` confirme qu’aucune migration ne reste à appliquer.
 - Room-Service validé dans une image Docker Node 22 construite avec la cible `build` de son Dockerfile (`npm ci` dans la cible de dépendances) : `npx prisma generate`, `npm run lint`, `npm test -- --runInBand` (196 tests), `npm run test:e2e -- --runInBand` (14 tests), `npm run build` et `npm run test:cov -- --runInBand` passent. Couverture : 100 % Statements, Branches, Functions et Lines.
 - Syntaxe des quatre scripts shell vérifiée avec `sh -n`; `./scripts/verifier-fichiers-partages.sh` confirme que les fichiers partagés sont identiques. Les scripts locaux ont été remis en LF et rendus exécutables conformément à Git et `.gitattributes`; cela ne change pas leur contenu versionné.

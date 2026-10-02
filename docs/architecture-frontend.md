@@ -31,6 +31,22 @@ Un seul processus (`main.js` et ses modules `src/main/`) détient l'état métie
 instance de `RealGatewayRuntime`, partagée par toutes les pages : naviguer
 d'une page à l'autre ne perd ni la session ni les préférences.
 
+### Passage du gateway simulé au gateway réel
+
+En version 1.x (tags `v1.0.0` et `v1.0.1`), le processus principal créait
+déjà une instance unique, `new MockGatewayRuntime()`, qui implémentait le
+contrat `ChatGateway` et simulait le serveur en mémoire. Les pages ne la
+voyaient qu'à travers les canaux IPC exposés par `preload.js`.
+
+La version 2.0.0 garde ce découpage. Le processus principal crée maintenant
+`new RealGatewayRuntime(configurationApi)` (`src/main/gateway.js`), qui parle
+au Serveur-API en HTTP et Socket.IO. Les pages continuent d'appeler des
+canaux IPC (`reseau:etat`, `presence:obtenir`, etc.) : elles ne savent pas
+quelle implémentation répond. Le mock, `MockGateway.ts` et l'interface
+TypeScript `ChatGateway` ont ensuite été retirés : il ne reste qu'une
+implémentation, celle qui est exécutée. Les tests unitaires remplacent le
+réseau par des doublures.
+
 ## Arborescence
 
 ```text

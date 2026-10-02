@@ -22,10 +22,10 @@ for repo in Infra Frontend Serveur-API Authentification Room-Service Message-Ser
 done
 cd A26_5A6_01-Infra
 cp .env.example .env
-openssl rand -hex 32
+docker run --rm node:22-alpine node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
-Copier la valeur générée dans `DASHBOARD_SESSION_SECRET` de `.env`, puis enregistrer. Aucun secret réel ne doit être commité. Ces valeurs sont pour un poste local de développement; ce Compose n’est pas un déploiement de production.
+La commande génère un secret sans outil supplémentaire sur l’hôte (`openssl rand -hex 32` donne le même résultat s’il est installé). Copier la valeur générée dans `DASHBOARD_SESSION_SECRET` de `.env`, puis enregistrer. Aucun secret réel ne doit être commité. Ces valeurs sont pour un poste local de développement; ce Compose n’est pas un déploiement de production.
 
 Pour reproduire une version, utiliser les tags ou commits validés indiqués dans le [guide des versions](docs/versions.md).
 
@@ -53,11 +53,40 @@ docker compose ps
 
 Le healthcheck vérifie réellement : PostgreSQL, connexion aux **quatre bases configurées**, Redis (`PONG`), les états `healthy` d’Auth, Room, Message, User-Config, Gateway **et Dashboard**, puis `GET /api/health/upstreams`. Il termine avec un code non nul en cas d’échec. Adminer est un outil de développement facultatif pour la validation, pas un service métier. La santé ne prouve pas à elle seule les fonctionnalités : suivre ensuite le [scénario de validation](docs/validation.md).
 
-```bash./scripts/healthcheck.sh --infra       # PostgreSQL, quatre bases et Redis seulement
+```bash
+./scripts/healthcheck.sh --infra       # PostgreSQL, quatre bases et Redis seulement
 ./scripts/verifier-fichiers-partages.sh
 ```
 
 Le script s’appuie sur l’environnement des conteneurs, n’exécute pas `.env` comme du code et ne nécessite pas `curl` sur l’hôte.
+
+### Résultats consignés (1er octobre 2026)
+
+Stack construite depuis les sources avec des volumes neufs (`docker compose up --build -d --wait`), puis `./scripts/healthcheck.sh` :
+
+```text
+== PostgreSQL ==
+/var/run/postgresql:5432 - accepting connections
+== Databases ==
+chatvardage_auth : accessible
+chatvardage_rooms : accessible
+chatvardage_messages : accessible
+chatvardage_config : accessible
+== Redis ==
+PONG
+== Microservices ==
+auth-service : healthy
+room-service : healthy
+message-service : healthy
+user-config-service : healthy
+serveur-api : healthy
+dashboard : healthy
+== Gateway (upstreams) ==
+{"status":"ok","service":"serveur-api","upstreams":{"auth":"ok","room":"ok","message":"ok","userConfig":"ok"},...}
+Stack OK
+```
+
+`GET /api/health` de Message-Service renvoie aussi `{"status":"ok","database":"ok","redis":"ok"}`. Sur la même stack, deux clients Socket.IO authentifiés via le Gateway ont reçu le même `private-message.created`. Un DM envoyé pendant la déconnexion de B est revenu par `GET /api/messages/history/:id` après sa reconnexion. Le détail des vérifications est dans le [rapport de validation](docs/rapport-validation.md).
 
 | Point d’accès local | Usage |
 |---|---|
@@ -66,7 +95,7 @@ Le script s’appuie sur l’environnement des conteneurs, n’exécute pas `.en
 | http://localhost:3002/administration | Dashboard AdminJS |
 | http://localhost:3001/health | Authentification |
 | http://localhost:3003/docs | Swagger Room-Service |
-| http://localhost:3004/docs | Swagger Message-Service |
+| http://localhost:3004/docs | Swagger Message-Service (REST; Socket.IO dans [temps réel DM](docs/api/temps-reel-dm.md)) |
 | http://localhost:3005/docs | Swagger User-Config-Service |
 | http://localhost:8081 | Adminer, inspection PostgreSQL en développement |
 
@@ -119,6 +148,23 @@ docker compose logs --tail=100 auth-service room-service message-service user-co
 - Notifications sous WSL : l’affichage natif dépend de D-Bus/du bureau. L’application possède un repli visuel; vérifier les notifications sur l’OS cible.
 
 `docker compose down` conserve les volumes. **`./scripts/reset.sh` et `docker compose down -v` effacent les données** : réserver ces commandes à un environnement jetable. Pour une validation propre, utiliser le protocole isolé de `docs/validation.md`.
+
+## Architecture et choix techniques
+
+![Schéma applications et conteneurs](docs/architecture.png)
+
+Architecture multiservice : Electron passe par un Gateway unique (Serveur-API), qui relaie vers quatre services. Chacun possède sa base PostgreSQL. Le Dashboard est un conteneur séparé de l’API. Détails : [architecture](docs/architecture.md).
+
+| Choix | Justification |
+|---|---|
+| Un service par responsabilité (comptes, serveurs/salons, messages, configuration) | Chaque responsabilité a son dépôt et sa base, ce qui permet de répartir le travail. Les contrats HTTP restent explicites. Le coût : plus d’appels entre services, mais un seul déploiement local par Compose. |
+| NestJS / TypeScript pour Gateway, Room, Message et User-Config | Mêmes conventions (DTO validés, guards, Jest) que le client TypeScript. Room, Message et User-Config exposent un Swagger généré à partir des contrôleurs. |
+| Rust / Axum / SQLx pour l’authentification | Hachage Argon2 et vérification JWT isolés dans un binaire typé, derrière le même contrat HTTP/JSON. |
+| PostgreSQL + Prisma (migrations) | Données relationnelles (comptes, membres, historiques) et migrations versionnées dans chaque dépôt, appliquées au démarrage. |
+| Redis Pub/Sub + Socket.IO | Redis transporte l’événement après l’écriture en base. Socket.IO gère la reconnexion, les salles par utilisateur et le repli en polling. |
+| AdminJS (Dashboard) | Panneau web prêt à l’emploi (listes, suppressions, formulaires), réservé au rôle `admin` et branché directement sur les API des services. |
+
+**Synchronisation.** PostgreSQL est la source de vérité. Une écriture REST ou Socket.IO est d’abord enregistrée en base, puis publiée sur Redis et diffusée aux sockets de l’expéditeur et du destinataire. Redis Pub/Sub ne garde rien en mémoire : à chaque reconnexion (`connexion.prete`), le client relit ses conversations et son historique par REST, puis fusionne les messages par identifiant pour éviter les doublons. Cette stratégie est simple et ne perd aucun message durable. Le prix à payer : un client déconnecté ne reçoit pas d’événement en différé, il relit l’état.
 
 ## Documentation centrale
 

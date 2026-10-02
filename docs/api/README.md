@@ -11,4 +11,4 @@ Base d’entrée Electron : `http://localhost:3000`. JSON sur HTTP, JWT dans `Au
 - [Diffusion des salons](temps-reel-salons.md)
 - [Contrat consommé par Electron](frontend.md)
 
-Les services Nest exposent Swagger sous `/docs` sur leurs ports locaux (3003/3004/3005). Le Gateway ne relaie pas ces pages. Auth fournit la documentation Markdown ci-dessus. Les schémas et migrations exécutables restent dans les dépôts propriétaires.
+Room, Message et User-Config exposent Swagger (OpenAPI) sous `/docs` sur leurs ports locaux (3003/3004/3005). Le Gateway ne relaie pas ces pages. Auth fournit la documentation Markdown ci-dessus. Les schémas et migrations exécutables restent dans les dépôts propriétaires.

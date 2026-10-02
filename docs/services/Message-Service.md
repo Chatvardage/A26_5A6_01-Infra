@@ -73,6 +73,8 @@ du Frontend.
 
 ## API REST
 
+La description OpenAPI interactive (Swagger) est disponible sur `http://localhost:3004/docs` : routes, paramètres, corps et contraintes de validation. Les événements Socket.IO n'y figurent pas; ils sont décrits plus bas.
+
 ### Messages privés (DM)
 
 - `GET /api/health` — santé PostgreSQL/Redis (public)

@@ -101,14 +101,14 @@ const socket = io('http://localhost:3000/messages', {
 
 Le handshake HTTP/polling et l'upgrade WebSocket utilisent le chemin Socket.IO `/socket.io`. Le Gateway le relaie vers Message-Service (`3004`) en supprimant les en-têtes entrants `x-user-id`, `x-user-role` et `x-internal-token`. Le Gateway reconstruit les métadonnées `x-forwarded-*`; la chaîne `x-forwarded-for` et le protocole fournis par un proxy amont ne sont honorés que lorsque `TRUST_PROXY=true`. Aucun identifiant de confiance n'est injecté par le Gateway pour Socket.IO : le namespace reste `/messages` et Message-Service établit l'identité à partir de `auth.token`, validé auprès d'Auth-Service.
 
-Le Gateway relaie les événements tels quels ; leur contrat détaillé est dans Message-Service (`README.md`, [temps réel DM](../api/temps-reel-dm.md), [temps réel salons](../api/temps-reel-salons.md)).
+Le Gateway relaie les événements tels quels ; leur contrat détaillé est dans le [guide Message-Service](../services/Message-Service.md#temps-réel), [temps réel DM](temps-reel-dm.md) et [temps réel salons](temps-reel-salons.md).
 
 Émissions client :
 
 - `private-message.send`
 - `room-message.join`, `room-message.leave`, `room-message.send`
 - `typing` (éphémère, salon ou DM)
-- `presence.update`, `profil.update`
+- `presence.update`, `presence.suivre` (avec accusé de réception), `profil.update`
 
 Événements serveur :
 
@@ -154,9 +154,9 @@ Retourne `200` si tous répondent avec un statut HTTP 2xx, sinon `503` et `statu
 - `503 Service Unavailable` : service interne injoignable.
 - `504 Gateway Timeout` : délai `PROXY_TIMEOUT_MS` dépassé.
 
-Un client qui n'a pas fini d'envoyer son corps de requête après `PROXY_TIMEOUT_MS` voit sa connexion fermée sans réponse HTTP (voir `docs/DECISIONS.md`, D3).
+Un client qui n'a pas fini d'envoyer son corps de requête après `PROXY_TIMEOUT_MS` voit sa connexion fermée sans réponse HTTP (voir [`docs/DECISIONS.md` du Serveur-API](https://github.com/Chatvardage/A26_5A6_01-Serveur-API/blob/main/docs/DECISIONS.md), D3).
 
-`PROXY_TIMEOUT_MS` est un délai par phase, pas une échéance globale. Une requête avec corps peut cumuler la phase de réception et l’appel au service interne. Pour User-Config, un appel avec corps peut en cumuler trois : réception, validation Auth, puis appel User-Config (voir `docs/DECISIONS.md`, D12).
+`PROXY_TIMEOUT_MS` est un délai par phase, pas une échéance globale. Une requête avec corps peut cumuler la phase de réception et l’appel au service interne. Pour User-Config, un appel avec corps peut en cumuler trois : réception, validation Auth, puis appel User-Config (voir [`docs/DECISIONS.md` du Serveur-API](https://github.com/Chatvardage/A26_5A6_01-Serveur-API/blob/main/docs/DECISIONS.md), D12).
 
 Toutes les réponses du Gateway portent `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY` et `Referrer-Policy: strict-origin-when-cross-origin`, sauf si le service interne fournit lui-même ces en-têtes.
 

@@ -255,7 +255,7 @@ compte de quelqu'un d'autre).
 `mot_de_passe_actuel` est obligatoire, entre 1 et 128 caractères. Cette
 confirmation empêche qu'un jeton volé suffise à supprimer irréversiblement
 un compte. Le client HTTP doit transmettre ce corps JSON avec sa requête
-`DELETE`; le `ChatGateway` du Frontend doit donc le relayer tel quel.
+`DELETE`; le `RealGatewayRuntime` du Frontend le relaie donc tel quel.
 
 **Erreurs** : `400` (mot de passe actuel absent, vide ou trop long), `401`
 (jeton manquant, invalide, expiré, associé à un compte déjà supprimé, ou

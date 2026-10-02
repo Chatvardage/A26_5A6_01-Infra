@@ -29,7 +29,7 @@ Instantané des modèles Prisma au 1er octobre 2026. Les migrations SQL des dép
 
 ### Authentification
 
-[Source et migrations](https://github.com/Chatvardage/A26_5A6_01-Authentification/tree/develop/prisma)
+[Source et migrations](https://github.com/Chatvardage/A26_5A6_01-Authentification/tree/main/prisma)
 
 ```prisma
 model Utilisateur {
@@ -83,7 +83,7 @@ model Utilisateur {
 
 ### Room-Service
 
-[Source et migrations](https://github.com/Chatvardage/A26_5A6_01-Room-Service/tree/develop/prisma)
+[Source et migrations](https://github.com/Chatvardage/A26_5A6_01-Room-Service/tree/main/prisma)
 
 ```prisma
 enum ServerRole {
@@ -161,7 +161,7 @@ model Room {
 
 ### Message-Service
 
-[Source et migrations](https://github.com/Chatvardage/A26_5A6_01-Message-Service/tree/develop/prisma)
+[Source et migrations](https://github.com/Chatvardage/A26_5A6_01-Message-Service/tree/main/prisma)
 
 ```prisma
 model PrivateMessage {
@@ -190,7 +190,7 @@ model RoomMessage {
 
 ### User-Config-Service
 
-[Source et migrations](https://github.com/Chatvardage/A26_5A6_01-User-Config-Service/tree/develop/prisma)
+[Source et migrations](https://github.com/Chatvardage/A26_5A6_01-User-Config-Service/tree/main/prisma)
 
 ```prisma
 enum Theme {

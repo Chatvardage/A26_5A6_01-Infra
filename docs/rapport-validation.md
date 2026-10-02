@@ -16,12 +16,13 @@ Validation locale du 1er octobre 2026, depuis les révisions de développement. 
 
 Les vérifications npm de compilation et de lint des services passent. Les couvertures reflètent les exclusions et seuils de chaque dépôt; elles ne signifient pas que toutes les interactions système sont couvertes. Le test des notifications exécute le module principal avec Electron simulé.
 
-Les sept vérificateurs de versions acceptent le tag correspondant et rejettent un tag incohérent. Les workflows passent actionlint et les cinq scripts shell Infra passent ShellCheck. L’audit des dépendances de production Dashboard ne signale aucune vulnérabilité critique, mais conserve 38 modérées et une élevée : leur résolution reste à évaluer avec les dépendances AdminJS. L’audit Message-Service ne signale aucune vulnérabilité.
+Les sept vérificateurs de versions acceptent le tag correspondant et rejettent un tag incohérent. Les workflows passent actionlint et les cinq scripts shell Infra passent ShellCheck. L’audit des dépendances de production Dashboard ne signale aucune vulnérabilité critique, mais conserve 38 modérées et une élevée : leur résolution reste à évaluer avec les dépendances AdminJS. L’audit Message-Service ne signale aucune vulnérabilité, y compris après l’ajout de Swagger (`js-yaml` forcé en 5.4.2 pour `@nestjs/swagger`).
 
 ## Stack et intégration réelle
 
 Une stack Docker isolée a été construite depuis les sources avec des volumes vierges, des ports locaux attribués automatiquement et un secret de session temporaire. Les ressources de la stack habituelle sont préservées.
 
+- Swagger de Message-Service servi sur `/docs` (14 routes REST, version 1.0.0), comme ceux de Room et User-Config.
 - Construction et démarrage des neuf conteneurs réussis; PostgreSQL, Redis, les services et le Dashboard sont en santé.
 - Connexion SQL vérifiée à chacune des quatre bases. Migrations appliquées : Authentification 4, Room 3, Message 3, Configuration 3.
 - Le healthcheck réussit avec la stack complète et échoue lorsque le Dashboard est arrêté; il réussit de nouveau après restauration.
