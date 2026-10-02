@@ -157,10 +157,19 @@ curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
 # Recharger le terminal
 source ~/.bashrc
 
-# Installer Node 20
-nvm install 20
-nvm use 20
-nvm alias default 20
+# 1. Passer à Node 22
+nvm install 22
+nvm use 22
+nvm alias default 22
+
+# Vérifier
+node -v
+npm -v
+which node
+which npm
+
+# Réparer les permissions du projet
+sudo chown -R $USER:$USER .
 ```
 
 ## Créer le premier administrateur
