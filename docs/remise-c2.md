@@ -6,12 +6,14 @@
 |---|---|---|
 | [Frontend](https://github.com/Chatvardage/A26_5A6_01-Frontend) | 2.0.0 | À publier après validation |
 | [Serveur-API](https://github.com/Chatvardage/A26_5A6_01-Serveur-API) | 1.0.0 | À publier après validation |
-| [Authentification](https://github.com/Chatvardage/A26_5A6_01-Authentification) | 0.2.0 | À publier après validation |
-| [Room-Service](https://github.com/Chatvardage/A26_5A6_01-Room-Service) | 2.0.0 | À publier après validation |
+| [Authentification](https://github.com/Chatvardage/A26_5A6_01-Authentification) | 1.0.0 | À publier après validation |
+| [Room-Service](https://github.com/Chatvardage/A26_5A6_01-Room-Service) | 1.0.0 | À publier après validation |
 | [Message-Service](https://github.com/Chatvardage/A26_5A6_01-Message-Service) | 1.0.0 | À publier après validation |
 | [User-Config-Service](https://github.com/Chatvardage/A26_5A6_01-User-Config-Service) | 1.0.0 | À publier après validation |
-| [Dashboard](https://github.com/Chatvardage/A26_5A6_01-Dashboard) | 1.0.1 | À publier après validation |
+| [Dashboard](https://github.com/Chatvardage/A26_5A6_01-Dashboard) | 1.0.0 | À publier après validation |
 | [Infra](https://github.com/Chatvardage/A26_5A6_01-Infra) | sans package.json | À publier après validation |
+
+La convention de remise est `1.0.0` pour les services et le Dashboard, et `2.0.0` pour Frontend. Infra utilise également `v1.0.0` comme tag de remise, sans ajouter un package.json à ce dépôt d’orchestration.
 
 Les tags C2 ne sont pas encore publiés. Cette table ne prétend pas qu’une branche de travail est une remise définitive. Après revue/fusion, créer les tags sur les commits validés et remplacer la dernière colonne par leurs liens. Infra peut avoir son propre tag de remise; Mobile est hors périmètre C2.
 
