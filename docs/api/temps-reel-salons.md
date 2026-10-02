@@ -114,4 +114,4 @@ Le payload réémis est `{ userId, scope, targetId, isTyping }`, où `userId` pr
 
 ## Authentification et origine WebSocket
 
-Identique aux DM : voir [temps réel DM](../api/temps-reel-dm.md). La validation du JWT est déléguée à Auth-Service (`AUTH_SERVICE_TIMEOUT_MS`), et la vérification d'appartenance aux salons est déléguée à Room-Service (`ROOM_SERVICE_TIMEOUT_MS`). Les deux réponses sont mémorisées brièvement (`AUTH_CACHE_TTL_MS`, `ROOM_ACCESS_CACHE_TTL_MS`, voir le README) ; un changement de serveur vide aussitôt le cache des accès à ce serveur.
+Identique aux DM : voir [temps réel DM](../api/temps-reel-dm.md). La validation du JWT est déléguée à Auth-Service (`AUTH_SERVICE_TIMEOUT_MS`), et la vérification d'appartenance aux salons est déléguée à Room-Service (`ROOM_SERVICE_TIMEOUT_MS`). Les deux réponses sont mémorisées brièvement (`AUTH_CACHE_TTL_MS`, `ROOM_ACCESS_CACHE_TTL_MS`, voir le [guide Message-Service](../services/Message-Service.md#variables-denvironnement)) ; un changement de serveur vide aussitôt le cache des accès à ce serveur.

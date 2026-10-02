@@ -38,8 +38,8 @@ La suppression d'un compte (`DELETE /api/internal/users/:userId`, appelée par A
 
 ## Authentification
 
-Les connexions REST utilisent `Authorization: Bearer <JWT>` et Socket.IO utilise `auth.token`. Le `userId` est dérivé du claim signé `sub`; il n'est jamais accepté directement depuis le client.
+Les connexions REST utilisent `Authorization: Bearer <JWT>` et Socket.IO utilise `auth.token`. Message-Service ne décode pas le jeton lui-même : il le fait valider par Authentification (`GET /api/auth/me`) et prend l'`id` de l'utilisateur renvoyé. Un identifiant fourni par le client (`x-user-id`, `handshake.auth.userId`) n'est jamais accepté.
 
 ## Authentification et origine WebSocket
 
-La validation du JWT est déléguée à Auth-Service et utilise `AUTH_SERVICE_TIMEOUT_MS` (3000 ms par défaut) ; un jeton validé est mémorisé `AUTH_CACHE_TTL_MS` (10 s par défaut, voir le README). Les origines présentes dans l’en-tête `Origin` doivent appartenir à `CORS_ORIGINS`. Une connexion sans en-tête `Origin` est acceptée volontairement pour permettre les clients non-navigateurs, notamment Electron/Socket.IO.
+La validation du JWT est déléguée à Auth-Service et utilise `AUTH_SERVICE_TIMEOUT_MS` (3000 ms par défaut) ; un jeton validé est mémorisé `AUTH_CACHE_TTL_MS` (10 s par défaut, voir le [guide Message-Service](../services/Message-Service.md#authentification)). Les origines présentes dans l’en-tête `Origin` doivent appartenir à `CORS_ORIGINS`. Une connexion sans en-tête `Origin` est acceptée volontairement pour permettre les clients non-navigateurs, notamment Electron/Socket.IO.

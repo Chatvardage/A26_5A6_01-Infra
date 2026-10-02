@@ -41,8 +41,8 @@ CHATVARDAGE_SOCKET_URL=https://votre-gateway/  npm run start:dev
 ```
 
 Le Gateway relaie ensuite vers Authentification, Room-Service,
-Message-Service et User-Config-Service — voir leurs README/AGENTS.md
-respectifs pour le détail par service.
+Message-Service et User-Config-Service — voir les [guides des services](../services/README.md)
+pour le détail par service.
 
 ### API réellement consommée (voir `RealGatewayRuntime.js` pour le détail exact)
 

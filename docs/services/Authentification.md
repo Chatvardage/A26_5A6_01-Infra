@@ -119,9 +119,8 @@ infrastructure::PgUtilisateurRepository
    PostgreSQL (schéma géré par les migrations Prisma de ce dépôt)
 ```
 
-Un schéma d'architecture **global** (client desktop + ce service + les
-autres services + conteneurs) est de la responsabilité collective de
-l'équipe et doit vivre dans le dépôt `infra` — ce README documente
+Le schéma d'architecture **global** (client desktop, services et
+conteneurs) est dans [architecture](../architecture.md) ; ce guide documente
 uniquement l'architecture interne de ce service.
 
 ## Migrations de la base de données (Prisma)

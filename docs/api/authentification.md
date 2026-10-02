@@ -473,7 +473,7 @@ admin, `404` si l'id n'existe pas.
 
 ---
 
-## Notes d'implémentation (pour le README / la démonstration)
+## Notes d'implémentation
 
 - Mots de passe hachés avec Argon2 (jamais stockés en clair).
 - Chaque requête protégée présente un JWT signé (HMAC) contenant `sub`
@@ -493,8 +493,8 @@ admin, `404` si l'id n'existe pas.
   sensible à la casse.
 - PostgreSQL est la source de vérité — il n'y a pas de mode mock/en
   mémoire dans ce service. Le schéma de la table `utilisateurs` est géré
-  par les migrations Prisma de ce dépôt (voir README, section
-  « Migrations de la base de données (Prisma) »).
-- Toutes les routes ci-dessus sont codées et testées (voir README,
-  section « Lancer les tests ») — y compris `PATCH`/`DELETE /api/auth/me`
+  par les migrations Prisma du dépôt Authentification (voir le
+  [guide du service](../services/Authentification.md#migrations-de-la-base-de-données-prisma)).
+- Toutes les routes ci-dessus sont codées et testées (voir le
+  [guide du service](../services/Authentification.md#lancer-les-tests)) — y compris `PATCH`/`DELETE /api/auth/me`
   et `GET`/`PATCH /api/users/{id}`.
