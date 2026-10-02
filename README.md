@@ -6,7 +6,8 @@ Point de départ du projet complet : client Electron, API Gateway, quatre servic
 
 - Git et accès aux huit dépôts privés de l’organisation **Chatvardage**.
 - Docker Engine 25+ / Docker Desktop avec Compose v2; Docker démarré.
-- Bash sous Linux/macOS ou WSL sous Windows pour les scripts. Les commandes ci-dessous sont en Bash/WSL.
+- Bash sous Linux/macOS ou WSL sous Windows pour les scripts. Les commandes ci-dessous sont en Bash/WSL; la génération du `.env` existe aussi en PowerShell.
+- `openssl` pour générer le `.env` sous Linux/macOS/WSL (présent par défaut sur ces systèmes). Sous Windows, PowerShell suffit.
 - Pour le client desktop depuis les sources : Node.js 22, npm et un bureau graphique. Le backend n’exige ni Rust, ni Node, ni PostgreSQL installés sur l’hôte.
 - Ports locaux libres : 3000 à 3005, 5432, 6379 et 8081. Ne pas lancer les Compose individuels en même temps que la stack globale.
 
@@ -21,11 +22,12 @@ for repo in Infra Frontend Serveur-API Authentification Room-Service Message-Ser
   git clone --branch main "https://github.com/Chatvardage/A26_5A6_01-$repo.git"
 done
 cd A26_5A6_01-Infra
-cp .env.example .env
-docker run --rm node:22-alpine node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+./scripts/generer-env.sh
 ```
 
-La commande génère un secret sans outil supplémentaire sur l’hôte (`openssl rand -hex 32` donne le même résultat s’il est installé). Copier la valeur générée dans `DASHBOARD_SESSION_SECRET` de `.env`, puis enregistrer. Aucun secret réel ne doit être commité. Ces valeurs sont pour un poste local de développement; ce Compose n’est pas un déploiement de production.
+Sous Windows sans WSL, depuis PowerShell dans `A26_5A6_01-Infra` : `.\scripts\generer-env.ps1`.
+
+Ne pas copier simplement `.env.example` : le script reprend la configuration du modèle et génère des secrets aléatoires distincts pour PostgreSQL, Redis, JWT, le jeton interne et le Dashboard. Il refuse d’écraser un `.env` existant; `--force` (ou `-Force` en PowerShell) le régénère. Après une régénération sur une stack qui a déjà des volumes, PostgreSQL et Redis gardent les anciens identifiants : réinitialiser les volumes (`docker compose down -v`, qui efface les données) avant de redémarrer. Le `.env` généré ne doit jamais être commité. Ce Compose sert au développement local; ce n’est pas un déploiement de production.
 
 Pour reproduire une version, utiliser les tags ou commits validés indiqués dans le [guide des versions](docs/versions.md).
 
@@ -51,7 +53,7 @@ docker compose ps
 
 `docker compose up --build` fonctionne aussi au premier plan. Au premier démarrage, PostgreSQL crée quatre bases et leurs propriétaires; les services appliquent automatiquement leurs migrations avant de devenir sains.
 
-Le healthcheck vérifie réellement : PostgreSQL, connexion aux **quatre bases configurées**, Redis (`PONG`), les états `healthy` d’Auth, Room, Message, User-Config, Gateway **et Dashboard**, puis `GET /api/health/upstreams`. Il termine avec un code non nul en cas d’échec. Adminer est un outil de développement facultatif pour la validation, pas un service métier. La santé ne prouve pas à elle seule les fonctionnalités : suivre ensuite le [scénario de validation](docs/validation.md).
+Le healthcheck vérifie réellement : les états `running healthy` des huit conteneurs requis (PostgreSQL, Redis, Auth, Room, Message, User-Config, Dashboard, Gateway), la présence et la connexion aux **quatre bases configurées**, Redis (`PONG`), la page du Dashboard, puis `GET /api/health/upstreams`. Il termine avec un code non nul en cas d’échec. Adminer est un outil de développement facultatif pour la validation, pas un service métier. La santé ne prouve pas à elle seule les fonctionnalités : suivre ensuite le [scénario de validation](docs/validation.md).
 
 ```bash
 ./scripts/healthcheck.sh --infra       # PostgreSQL, quatre bases et Redis seulement
@@ -60,33 +62,34 @@ Le healthcheck vérifie réellement : PostgreSQL, connexion aux **quatre bases c
 
 Le script s’appuie sur l’environnement des conteneurs, n’exécute pas `.env` comme du code et ne nécessite pas `curl` sur l’hôte.
 
-### Résultats consignés (1er octobre 2026)
+### Résultats consignés (2 octobre 2026)
 
-Stack construite depuis les sources avec des volumes neufs (`docker compose up --build -d --wait`), puis `./scripts/healthcheck.sh` :
+Stack construite depuis les sources avec des volumes neufs : `./scripts/generer-env.sh`, `docker compose up --build -d --wait`, puis `./scripts/healthcheck.sh` :
 
 ```text
+postgres : running healthy
+redis : running healthy
+auth-service : running healthy
+room-service : running healthy
+message-service : running healthy
+user-config-service : running healthy
+dashboard : running healthy
+serveur-api : running healthy
 == PostgreSQL ==
 /var/run/postgresql:5432 - accepting connections
 == Databases ==
-chatvardage_auth : accessible
-chatvardage_rooms : accessible
-chatvardage_messages : accessible
-chatvardage_config : accessible
+chatvardage_auth : présente et accessible
+chatvardage_rooms : présente et accessible
+chatvardage_messages : présente et accessible
+chatvardage_config : présente et accessible
 == Redis ==
 PONG
-== Microservices ==
-auth-service : healthy
-room-service : healthy
-message-service : healthy
-user-config-service : healthy
-serveur-api : healthy
-dashboard : healthy
+== Dashboard ==
 == Gateway (upstreams) ==
-{"status":"ok","service":"serveur-api","upstreams":{"auth":"ok","room":"ok","message":"ok","userConfig":"ok"},...}
 Stack OK
 ```
 
-`GET /api/health` de Message-Service renvoie aussi `{"status":"ok","database":"ok","redis":"ok"}`. Sur la même stack, deux clients Socket.IO authentifiés via le Gateway ont reçu le même `private-message.created`. Un DM envoyé pendant la déconnexion de B est revenu par `GET /api/messages/history/:id` après sa reconnexion. Le détail des vérifications est dans le [rapport de validation](docs/rapport-validation.md).
+`./scripts/healthcheck.sh --infra` répond `Infrastructure OK`. Sur la même stack, deux clients Socket.IO authentifiés via le Gateway ont reçu le même `private-message.created`. Un DM envoyé pendant la déconnexion de B est revenu par `GET /api/messages/history/:id` après sa reconnexion. Le détail des vérifications est dans le [rapport de validation](docs/rapport-validation.md).
 
 | Point d’accès local | Usage |
 |---|---|
@@ -97,7 +100,7 @@ Stack OK
 | http://localhost:3003/docs | Swagger Room-Service |
 | http://localhost:3004/docs | Swagger Message-Service (REST; Socket.IO dans [temps réel DM](docs/api/temps-reel-dm.md)) |
 | http://localhost:3005/docs | Swagger User-Config-Service |
-| http://localhost:8081 | Adminer, inspection PostgreSQL en développement |
+| http://localhost:8081 | Adminer, inspection PostgreSQL en développement (serveur `postgres`, identifiants `POSTGRES_SUPERUSER` / `POSTGRES_SUPERPASS` du `.env`) |
 
 Tous les ports publiés sont liés à `127.0.0.1`. Deux clients sur **le même poste**, avec deux profils Electron, conviennent à la démonstration. Les autres postes du réseau ne peuvent pas joindre cette configuration telle quelle.
 
@@ -139,7 +142,7 @@ docker compose up -d --wait          # reprise avec les données
 docker compose logs --tail=100 auth-service room-service message-service user-config-service serveur-api dashboard
 ```
 
-- Secret absent : renseigner `DASHBOARD_SESSION_SECRET` avant toute commande Compose.
+- `.env` absent ou secret vide : lancer `./scripts/generer-env.sh` avant toute commande Compose.
 - Chemin de build absent : vérifier les huit dossiers voisins, particulièrement Dashboard.
 - Port occupé : arrêter l’autre environnement ou choisir des ports distincts dans une configuration de test.
 - API saine mais connexion impossible : examiner Auth et les migrations; un healthcheck ne crée pas de compte.

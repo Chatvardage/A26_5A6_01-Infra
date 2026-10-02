@@ -32,7 +32,7 @@ docker compose ps
 ./scripts/healthcheck.sh
 docker compose logs --no-color --tail=100 postgres redis
 ```
-Vérifier que PostgreSQL et Redis sont `healthy`. `./scripts/healthcheck.sh` vérifie aussi les six services (Auth, Room, Message, User-Config, Gateway, Dashboard) et `/api/health/upstreams` du Gateway ; `./scripts/healthcheck.sh --infra` se limite à PostgreSQL et Redis.
+Vérifier que PostgreSQL et Redis sont `healthy`. `./scripts/healthcheck.sh` vérifie les 8 services essentiels (PostgreSQL, Redis, Auth, Room, Message, User-Config, Dashboard et Serveur-API), les quatre bases configurées (présence et connexion), Redis, le Dashboard et `/api/health/upstreams` du Gateway. `./scripts/healthcheck.sh --infra` vérifie PostgreSQL, Redis et les quatre bases configurées (présence et connexion), sans sonder les services applicatifs.
 
 Puis valider au moins une migration réelle d'un microservice contre une base neuve. Pour Room-Service :
 ```bash
@@ -76,7 +76,7 @@ Ces décisions ne remplacent pas les validations obligatoires avant PR indiquée
 - Configuration Compose valide avec `DASHBOARD_SESSION_SECRET` renseigné; refus attendu avec une valeur vide.
 - Stack construite et démarrée avec `docker compose up -d --build --wait --wait-timeout 180` après `docker compose down -v`, dans le projet isolé `chatvardage-validation-6622a39`. La configuration de validation dérive de `docker compose --env-file .env.example config --format json`; seuls le nom du projet, les noms explicites des conteneurs/réseaux/volumes et les ports publiés ont été adaptés pour isoler la stack. Aucun port hôte n’est publié pendant cette validation; les accès depuis l’hôte ne sont donc pas couverts. Les volumes locaux habituels sont préservés.
 - `docker compose ps` : PostgreSQL, Redis, Auth, Room, Message, User-Config, Serveur-API et Dashboard sont `healthy`; Adminer est démarré.
-- `./scripts/healthcheck.sh` : quatre bases présentes, Redis répond `PONG`, six services sains et `/api/health/upstreams` renvoie `ok` pour tous les services.
+- `./scripts/healthcheck.sh` : quatre bases présentes, Redis répond `PONG`, huit services essentiels sains et `/api/health/upstreams` renvoie `ok` pour tous les services.
 - Logs PostgreSQL/Redis examinés : initialisation terminée et services prêts. Les trois migrations Prisma Room-Service ont été réellement appliquées sur la base neuve; une nouvelle exécution de `npx prisma migrate deploy` confirme qu’aucune migration ne reste à appliquer.
 - Room-Service validé dans une image Docker Node 22 construite avec la cible `build` de son Dockerfile (`npm ci` dans la cible de dépendances) : `npx prisma generate`, `npm run lint`, `npm test -- --runInBand` (196 tests), `npm run test:e2e -- --runInBand` (14 tests), `npm run build` et `npm run test:cov -- --runInBand` passent. Couverture : 100 % Statements, Branches, Functions et Lines.
 - Syntaxe des quatre scripts shell vérifiée avec `sh -n`; `./scripts/verifier-fichiers-partages.sh` confirme que les fichiers partagés sont identiques. Les scripts locaux ont été remis en LF et rendus exécutables conformément à Git et `.gitattributes`; cela ne change pas leur contenu versionné.
@@ -93,7 +93,7 @@ Le job `compose-et-scripts` génère maintenant un secret temporaire avec `opens
 
 - `.gitattributes` impose désormais LF aux fichiers texte (`* text=auto eol=lf`), avec une règle explicite pour les scripts shell. Les fichiers texte suivis ont été normalisés une seule fois; les modifications de fins de ligne ne changent pas leur logique.
 - La suppression du repli `DASHBOARD_COOKIE_SECRET` n’est pas retenue dans cette correction. La valeur `dashboard_cookie_secret_for_local_development` sert de marqueur de développement : `resoudreSecrets()` la remplace par un secret aléatoire en développement/test et la rejette explicitement hors de ces modes, indépendamment de sa longueur. Elle n’est donc pas acceptée en production parce qu’elle dépasse 32 caractères. La consigne précédente sur le secret de session sans valeur publique concerne `DASHBOARD_SESSION_SECRET`; elle ne signifie pas que ce marqueur de cookie est utilisé comme clé cryptographique.
-- La génération manuelle de `DASHBOARD_SESSION_SECRET` reste un choix explicite du démarrage Infra. Le README la place avant `docker compose up` et `.env.example` décrit l’obligation. Aucun message externe à l’équipe n’est envoyé automatiquement.
+- `DASHBOARD_SESSION_SECRET` reste vide dans `.env.example`. `scripts/generer-env.sh` / `generer-env.ps1` le génèrent avec les autres secrets avant `docker compose up`, comme l’indique le README. Aucun message externe à l’équipe n’est envoyé automatiquement.
 - Les décisions et résultats restent dans `AGENTS.md`, conformément à la demande de cette revue. Le déplacement vers un journal séparé pourra être envisagé si les entrées s’accumulent; il n’est pas nécessaire pour cette correction.
 
 ## Documentation centrale

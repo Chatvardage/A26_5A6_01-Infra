@@ -2,51 +2,88 @@
 set -eu
 
 # Usage : ./scripts/healthcheck.sh [--infra]
-# Sans option : vérifie PostgreSQL, Redis, les microservices et le Gateway.
-# --infra : vérifie uniquement PostgreSQL et Redis (microservice lancé sur l'hôte).
-
+# Sans option : vérifie les 8 services requis, les 4 bases, Redis, Dashboard et Gateway.
+# --infra : vérifie uniquement PostgreSQL, les 4 bases et Redis.
 infra_only=0
-
 for arg in "$@"; do
   case "$arg" in
-    --infra)
-      infra_only=1
-      ;;
-    -h|--help)
-      echo "Usage : $0 [--infra]"
-      exit 0
-      ;;
-    *)
-      echo "Option inconnue : $arg" >&2
-      echo "Usage : $0 [--infra]" >&2
-      exit 2
-      ;;
+    --infra) infra_only=1 ;;
+    -h|--help) echo "Usage : $0 [--infra]"; exit 0 ;;
+    *) echo "Option inconnue : $arg" >&2; echo "Usage : $0 [--infra]" >&2; exit 2 ;;
   esac
 done
 
-# Exécuter depuis la racine du dépôt, où se trouvent docker-compose.yml et .env.
 cd "$(dirname "$0")/.."
 
-# Les identifiants sont lus dans l'environnement des conteneurs (fourni par
-# docker compose à partir de .env) : ce script ne lit ni n'exécute .env lui-même.
+if [ "$infra_only" -eq 1 ]; then
+  required_services="postgres redis"
+else
+  required_services="postgres redis auth-service room-service message-service user-config-service dashboard serveur-api"
+fi
+
+# Vérifie d'abord que chaque conteneur requis existe, tourne et est healthy.
+failed=0
+for service in $required_services; do
+  if ! container_id=$(docker compose ps -q "$service" | head -n 1); then
+    echo "$service : impossible de lire l'état" >&2
+    failed=1
+    continue
+  fi
+  if [ -z "$container_id" ]; then
+    echo "$service : non démarré" >&2
+    failed=1
+    continue
+  fi
+  if ! status=$(docker inspect -f '{{.State.Status}} {{if .State.Health}}{{.State.Health.Status}}{{else}}sans-healthcheck{{end}}' "$container_id"); then
+    echo "$service : inspection impossible" >&2
+    failed=1
+    continue
+  fi
+  echo "$service : $status"
+  if [ "$status" != "running healthy" ]; then
+    failed=1
+  fi
+done
+if [ "$failed" -ne 0 ]; then
+  echo "Au moins un service requis n'est pas running/healthy." >&2
+  exit 1
+fi
 
 echo "== PostgreSQL =="
-docker compose exec -T postgres sh -c 'pg_isready -U "$POSTGRES_USER" -d postgres'
+if ! docker compose exec -T postgres sh -c 'pg_isready -U "$POSTGRES_USER" -d postgres'; then
+  echo "PostgreSQL n'est pas prêt." >&2
+  exit 1
+fi
 
 echo "== Databases =="
-docker compose exec -T postgres sh -eu -c '
-  for db in "$AUTH_DB" "$ROOMS_DB" "$MESSAGES_DB" "$CONFIG_DB"; do
-    psql -U "$POSTGRES_USER" -d "$db" -v ON_ERROR_STOP=1 -Atc "SELECT 1" >/dev/null
-    echo "$db : accessible"
-  done
-'
+# Les noms attendus viennent de l'environnement réel du conteneur, pas de valeurs codées en dur.
+if ! docker compose exec -T postgres sh -c '
+set -eu
+actual=$(psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d postgres -Atc "SELECT datname FROM pg_database ORDER BY datname;")
+for db in "$AUTH_DB" "$ROOMS_DB" "$MESSAGES_DB" "$CONFIG_DB"; do
+  if ! printf "%s\n" "$actual" | grep -Fxq "$db"; then
+    echo "$db : absente" >&2
+    exit 1
+  fi
+  # Présente ne suffit pas : connexion réelle à la base.
+  psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$db" -Atc "SELECT 1" >/dev/null
+  echo "$db : présente et accessible"
+done
+'; then
+  echo "Une base configurée est absente, inaccessible, ou PostgreSQL a refusé la requête." >&2
+  exit 1
+fi
 
 echo "== Redis =="
-# REDISCLI_AUTH est défini dans le service redis de docker-compose.yml.
-redis_reply=$(docker compose exec -T redis redis-cli ping)
+# REDISCLI_AUTH est fourni par le conteneur redis (voir docker-compose.yml) ;
+# redis-cli s'authentifie donc sans option -a explicite.
+if ! redis_reply=$(docker compose exec -T redis redis-cli ping); then
+  echo "Impossible d'interroger Redis." >&2
+  exit 1
+fi
 echo "$redis_reply"
 if [ "$redis_reply" != "PONG" ]; then
-  echo "Redis ne répond pas PONG" >&2
+  echo "Redis ne répond pas exactement PONG." >&2
   exit 1
 fi
 
@@ -55,37 +92,34 @@ if [ "$infra_only" -eq 1 ]; then
   exit 0
 fi
 
-echo "== Microservices =="
-# État rapporté par les healthchecks de docker-compose.yml. On vérifie tous les
-# services avant d'échouer, pour afficher un diagnostic complet.
-failed=0
-for service in auth-service room-service message-service user-config-service serveur-api dashboard; do
-  container_id=$(docker compose ps -q "$service")
-  if [ -z "$container_id" ]; then
-    status="non démarré"
-  else
-    status=$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "$container_id")
-  fi
-  echo "$service : $status"
-  if [ "$status" != "healthy" ]; then
-    failed=1
-  fi
-done
-
-if [ "$failed" -ne 0 ]; then
-  echo "Au moins un microservice n'est pas healthy : voir 'docker compose logs <service>'." >&2
+echo "== Dashboard =="
+if ! docker compose exec -T dashboard node -e "
+const signal = AbortSignal.timeout(5000);
+fetch('http://localhost:3000/administration', { signal })
+  .then((r) => process.exit(r.ok ? 0 : 1))
+  .catch((e) => { console.error(e.message); process.exit(1); });
+"; then
+  echo "Le Dashboard ne répond pas correctement." >&2
   exit 1
 fi
 
 echo "== Gateway (upstreams) =="
-# Appel depuis le conteneur du Gateway : ne dépend pas de curl sur l'hôte.
-# /api/health/upstreams répond 200 si auth, room, message et userConfig sont ok, 503 sinon.
 if ! docker compose exec -T serveur-api node -e "
-fetch('http://localhost:3000/api/health/upstreams')
-  .then(async (r) => { console.log(await r.text()); process.exit(r.ok ? 0 : 1); })
+const signal = AbortSignal.timeout(5000);
+fetch('http://localhost:3000/api/health/upstreams', { signal })
+  .then(async (r) => {
+    if (!r.ok) process.exit(1);
+    let body;
+    try { body = await r.json(); } catch { process.exit(1); }
+    const u = body && body.upstreams;
+    const ok = body?.status === 'ok' && body?.service === 'serveur-api' && u &&
+      u.auth === 'ok' && u.room === 'ok' && u.message === 'ok' && u.userConfig === 'ok';
+    if (!ok) console.error(JSON.stringify(body));
+    process.exit(ok ? 0 : 1);
+  })
   .catch((e) => { console.error(e.message); process.exit(1); });
 "; then
-  echo "Le Gateway signale au moins un service indisponible." >&2
+  echo "Le Gateway signale un état invalide ou un upstream indisponible." >&2
   exit 1
 fi
 

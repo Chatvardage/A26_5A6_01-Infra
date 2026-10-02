@@ -8,7 +8,7 @@ Une commande réussie est une preuve uniquement pour la révision et l’environ
 
 Cloner les huit révisions à valider dans un dossier distinct. Générer une configuration Compose de validation avec un nom de projet différent, des noms de conteneurs/réseaux uniques, des volumes neufs et des ports libres. Le `container_name` et le nom du réseau du Compose racine étant fixes, **`-p` seul ne suffit pas** à isoler deux stacks.
 
-Suivre exactement le README (secret de session inclus), construire les images, attendre les healthchecks, puis contrôler :
+Suivre exactement le README (génération du `.env` incluse), construire les images, attendre les healthchecks, puis contrôler :
 
 ```bash
 docker compose config -q
