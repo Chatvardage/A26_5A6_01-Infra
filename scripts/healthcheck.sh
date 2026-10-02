@@ -74,9 +74,9 @@ done
 fi
 
 echo "== Redis =="
-# REDISCLI_AUTH est fourni par le conteneur redis (voir docker-compose.yml) ;
-# redis-cli s'authentifie donc sans option -a explicite.
-if ! redis_reply=$(docker compose exec -T redis redis-cli ping); then
+# Charge le mot de passe généré dans /infra/.env à l'intérieur du conteneur.
+if ! redis_reply=$(docker compose exec -T redis sh -c \
+  'set -a; . /infra/.env; set +a; REDISCLI_AUTH="$REDIS_PASSWORD" redis-cli ping'); then
   echo "Impossible d'interroger Redis." >&2
   exit 1
 fi

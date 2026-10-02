@@ -13,6 +13,9 @@ set +a
 
 case "${1:-}" in
   postgres)
+    export POSTGRES_USER="$POSTGRES_SUPERUSER"
+    export POSTGRES_PASSWORD="$POSTGRES_SUPERPASS"
+    export POSTGRES_DB=postgres
     exec docker-entrypoint.sh postgres
     ;;
   redis)

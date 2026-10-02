@@ -18,7 +18,8 @@ services:
         if [ -f /infra/.env ]; then
           echo 'OK: .env existe déjà; secrets conservés.';
         else
-          /bin/sh /infra/scripts/generer-env.sh;
+          /bin/sh /infra/scripts/generer-env.sh &&
+          chmod 644 /infra/.env;
         fi
     restart: "no"
 
@@ -62,7 +63,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          'set -a; . /infra/.env; set +a; pg_isready -U "$POSTGRES_SUPERUSER" -d postgres'
+          'set -a; . /infra/.env; set +a; pg_isready -U "$$POSTGRES_SUPERUSER" -d postgres'
         ]
       interval: 5s
       timeout: 5s
@@ -117,7 +118,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          'set -a; . /infra/.env; set +a; REDISCLI_AUTH="$REDIS_PASSWORD" redis-cli ping | grep -q PONG'
+          'set -a; . /infra/.env; set +a; REDISCLI_AUTH="$$REDIS_PASSWORD" redis-cli ping | grep -q PONG'
         ]
       interval: 5s
       timeout: 3s
