@@ -18,7 +18,7 @@ Cloner les huit dépôts ci-dessous côte à côte.
 mkdir Chatvardage
 cd Chatvardage
 for repo in Infra Frontend Serveur-API Authentification Room-Service Message-Service User-Config-Service Dashboard; do
-  git clone --branch develop "https://github.com/Chatvardage/A26_5A6_01-$repo.git"
+  git clone --branch main "https://github.com/Chatvardage/A26_5A6_01-$repo.git"
 done
 cd A26_5A6_01-Infra
 cp .env.example .env
@@ -129,7 +129,7 @@ docker compose logs --tail=100 auth-service room-service message-service user-co
 - [Guides détaillés par dépôt](docs/services/README.md)
 - [Validation, démonstration et résultats](docs/validation.md)
 - [Versions et publication](docs/versions.md)
-- [Synchronisation facultative des clones](scripts/info-upll-clone.md)
+- [Synchronisation facultative des clones](scripts/info-pull-clone.md)
 
 ## CI Infra
 
