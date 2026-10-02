@@ -1,7 +1,29 @@
 name: chatvardage-c2
 
 services:
+  # Bootstrap C2 : sur un clone propre, `docker compose up -d` exécute
+  # réellement scripts/generer-env.sh avant de démarrer la stack. Un .env
+  # existant est conservé afin que les secrets restent stables.
+  generer-env:
+    image: alpine:3.22
+    container_name: chatvardage-generer-env
+    working_dir: /infra
+    volumes:
+      - ./:/infra
+    command:
+      - /bin/sh
+      - -c
+      - >-
+        apk add --no-cache openssl >/dev/null &&
+        if [ -f /infra/.env ]; then
+          echo 'OK: .env existe déjà; secrets conservés.';
+        else
+          /bin/sh /infra/scripts/generer-env.sh;
+        fi
+    restart: "no"
+
   postgres:
+    entrypoint: ["/bin/sh", "/infra/scripts/docker-entrypoint-env.sh", "postgres"]
     image: postgres:17-alpine
     container_name: chatvardage-postgres
     restart: unless-stopped
@@ -34,17 +56,22 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./postgres/init:/docker-entrypoint-initdb.d:ro
+      - ./:/infra:ro
 
     healthcheck:
       test:
         [
           "CMD-SHELL",
-          "pg_isready -U ${POSTGRES_SUPERUSER:-postgres} -d postgres"
+          'set -a; . /infra/.env; set +a; pg_isready -U "$POSTGRES_SUPERUSER" -d postgres'
         ]
       interval: 5s
       timeout: 5s
       retries: 20
       start_period: 10s
+
+    depends_on:
+      generer-env:
+        condition: service_completed_successfully
 
     networks:
       - chatvardage
@@ -68,6 +95,7 @@ services:
       - chatvardage
 
   redis:
+    entrypoint: ["/bin/sh", "/infra/scripts/docker-entrypoint-env.sh", "redis"]
     image: redis:7.4-alpine
     container_name: chatvardage-redis
     restart: unless-stopped
@@ -77,34 +105,34 @@ services:
       # passe n'est jamais interpolé dans une commande shell.
       REDISCLI_AUTH: ${REDIS_PASSWORD:-chatvardage_redis_dev}
 
-    command:
-      - redis-server
-      - --appendonly
-      - "yes"
-      - --requirepass
-      - ${REDIS_PASSWORD:-chatvardage_redis_dev}
 
     ports:
       - "127.0.0.1:6379:6379"
 
     volumes:
       - redis_data:/data
+      - ./:/infra:ro
 
     healthcheck:
       test:
         [
           "CMD-SHELL",
-          "redis-cli ping | grep -q PONG"
+          'set -a; . /infra/.env; set +a; REDISCLI_AUTH="$REDIS_PASSWORD" redis-cli ping | grep -q PONG'
         ]
       interval: 5s
       timeout: 3s
       retries: 20
       start_period: 5s
 
+    depends_on:
+      generer-env:
+        condition: service_completed_successfully
+
     networks:
       - chatvardage
 
   auth-service:
+    entrypoint: ["/bin/sh", "/infra/scripts/docker-entrypoint-env.sh", "auth"]
     build:
       context: ../A26_5A6_01-Authentification
       dockerfile: Dockerfile
@@ -130,10 +158,15 @@ services:
       SERVICES_COMPTE_SUPPRIME_URLS: http://room-service:3003,http://message-service:3004,http://user-config-service:3005
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-chatvardage_internal_dev}
 
+    volumes:
+      - ./:/infra:ro
+
     ports:
       - "127.0.0.1:3001:3001"
 
     depends_on:
+      generer-env:
+        condition: service_completed_successfully
       postgres:
         condition: service_healthy
 
@@ -153,6 +186,7 @@ services:
       - chatvardage
 
   room-service:
+    entrypoint: ["/bin/sh", "/infra/scripts/docker-entrypoint-env.sh", "room"]
     build:
       context: ../A26_5A6_01-Room-Service
       dockerfile: Dockerfile
@@ -180,6 +214,9 @@ services:
       # événement perdu au démarrage est sans gravité.
       MESSAGE_SERVICE_URL: http://message-service:3004
 
+    volumes:
+      - ./:/infra:ro
+
     ports:
       - "127.0.0.1:3003:3003"
 
@@ -195,6 +232,8 @@ services:
       start_period: 10s
 
     depends_on:
+      generer-env:
+        condition: service_completed_successfully
       postgres:
         condition: service_healthy
       auth-service:
@@ -204,6 +243,7 @@ services:
       - chatvardage
 
   message-service:
+    entrypoint: ["/bin/sh", "/infra/scripts/docker-entrypoint-env.sh", "message"]
     build:
       context: ../A26_5A6_01-Message-Service
       dockerfile: Dockerfile
@@ -230,6 +270,9 @@ services:
       ROOM_ACCESS_CACHE_TTL_MS: ${ROOM_ACCESS_CACHE_TTL_MS:-10000}
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-chatvardage_internal_dev}
 
+    volumes:
+      - ./:/infra:ro
+
     ports:
       - "127.0.0.1:3004:3004"
 
@@ -245,6 +288,8 @@ services:
       start_period: 10s
 
     depends_on:
+      generer-env:
+        condition: service_completed_successfully
       postgres:
         condition: service_healthy
       redis:
@@ -258,6 +303,7 @@ services:
       - chatvardage
 
   user-config-service:
+    entrypoint: ["/bin/sh", "/infra/scripts/docker-entrypoint-env.sh", "user-config"]
     build:
       context: ../A26_5A6_01-User-Config-Service
       dockerfile: Dockerfile
@@ -277,6 +323,9 @@ services:
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-chatvardage_internal_dev}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
 
+    volumes:
+      - ./:/infra:ro
+
     ports:
       - "127.0.0.1:3005:3005"
 
@@ -293,6 +342,8 @@ services:
       start_period: 10s
 
     depends_on:
+      generer-env:
+        condition: service_completed_successfully
       postgres:
         condition: service_healthy
 
@@ -300,6 +351,7 @@ services:
       - chatvardage
 
   dashboard:
+    entrypoint: ["/bin/sh", "/infra/scripts/docker-entrypoint-env.sh", "dashboard"]
     build:
       context: ../A26_5A6_01-Dashboard/dashboard-chatvardage
       dockerfile: Dockerfile
@@ -310,13 +362,14 @@ services:
     environment:
       NODE_ENV: ${NODE_ENV:-development}
       PORT: 3000
-      # Marqueur local : resoudreSecrets() doit le remplacer par un secret aléatoire
-      # en dev/test et le rejeter hors de ces modes (voir AGENTS.md, secret de cookie).
-      COOKIE_SECRET: ${DASHBOARD_COOKIE_SECRET:-dashboard_cookie_secret_for_local_development}
-      SESSION_SECRET: ${DASHBOARD_SESSION_SECRET:?Definir DASHBOARD_SESSION_SECRET dans .env}
+      # COOKIE_SECRET et SESSION_SECRET sont chargés depuis /infra/.env par
+      # scripts/docker-entrypoint-env.sh après le bootstrap generer-env.
       AUTH_SERVICE_URL: http://auth-service:3001
       ROOM_SERVICE_URL: http://room-service:3003
       MESSAGE_SERVICE_URL: http://message-service:3004
+
+    volumes:
+      - ./:/infra:ro
 
     ports:
       - "127.0.0.1:3002:3000"
@@ -333,6 +386,8 @@ services:
       start_period: 10s
 
     depends_on:
+      generer-env:
+        condition: service_completed_successfully
       auth-service:
         condition: service_healthy
       room-service:
@@ -344,6 +399,7 @@ services:
       - chatvardage
 
   serveur-api:
+    entrypoint: ["/bin/sh", "/infra/scripts/docker-entrypoint-env.sh", "serveur-api"]
     build:
       context: ../A26_5A6_01-Serveur-API
       dockerfile: Dockerfile
@@ -367,6 +423,9 @@ services:
       # Joint aux seules requêtes vers User-Config (avec x-user-id).
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-chatvardage_internal_dev}
 
+    volumes:
+      - ./:/infra:ro
+
     ports:
       - "127.0.0.1:3000:3000"
 
@@ -382,6 +441,8 @@ services:
       start_period: 10s
 
     depends_on:
+      generer-env:
+        condition: service_completed_successfully
       auth-service:
         condition: service_healthy
       room-service:

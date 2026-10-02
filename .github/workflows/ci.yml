@@ -24,10 +24,15 @@ jobs:
       - uses: actions/checkout@v4
       # Valide la syntaxe et l'interpolation (les dépôts des services ne sont
       # pas nécessaires : aucune image n'est construite).
-      - name: Valider Compose avec un secret temporaire
-        run: |
-          DASHBOARD_SESSION_SECRET="$(openssl rand -hex 32)" \
-            docker compose --env-file .env.example config -q
+      # Le clone propre doit être valide sans .env : le démarrage C2 se fait
+      # directement avec `docker compose up -d`.
+      - name: Valider Compose sans .env
+        run: docker compose config -q
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Tester les scripts Infra
+        run: node --test scripts/tests/*.test.cjs
       # shellcheck est préinstallé sur les runners ubuntu-latest.
       - run: shellcheck scripts/*.sh postgres/init/*.sh
 

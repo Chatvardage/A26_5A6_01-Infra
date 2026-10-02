@@ -27,56 +27,29 @@ Chatvardage/
 
 Le Compose orchestre PostgreSQL, Redis, Auth, Room, Message, User-Config, Dashboard et Serveur-API avec leurs healthchecks. Le Gateway est exposé sur `127.0.0.1:3000` et le Dashboard sur `127.0.0.1:3002`.
 
-### 1. Générer le fichier `.env`
+### 1. Démarrer toute la stack
 
-Ne copiez pas simplement `.env.example` vers `.env`. Utilisez le script fourni : il conserve la configuration du modèle et génère des secrets aléatoires distincts pour PostgreSQL, Redis, JWT, les communications internes et le Dashboard. Le fichier `.env` généré ne doit jamais être committé.
-
-**Windows — PowerShell**
-
-```powershell
-cd A26_5A6_01-Infra
-.\scripts\generer-env.ps1
-```
-
-**Linux/macOS**
+Pour le Contrôle 2, un clone local neuf doit démarrer avec **une seule commande** depuis ce dépôt :
 
 ```bash
-cd A26_5A6_01-Infra
-chmod +x scripts/generer-env.sh
-./scripts/generer-env.sh
+docker compose up -d
 ```
 
-Si `.env` existe déjà, le script s'arrête volontairement afin de ne pas remplacer les secrets existants. Pour régénérer volontairement le fichier :
+Au premier `docker compose up -d`, le service de bootstrap `generer-env` exécute automatiquement `scripts/generer-env.sh` et crée `.env` avec dix secrets aléatoires distincts. Les autres services attendent la fin de cette étape et chargent ce même fichier avant de démarrer. Si `.env` existe déjà, il est conservé : relancer `docker compose up -d` ne change donc pas les secrets.
+
+Le script peut aussi être lancé manuellement si nécessaire :
 
 ```powershell
 # Windows
-.\scripts\generer-env.ps1 -Force
+.\scripts\generer-env.ps1
 ```
 
 ```bash
 # Linux/macOS
-./scripts/generer-env.sh --force
+./scripts/generer-env.sh
 ```
 
-> **Attention :** après une régénération des mots de passe sur une stack qui possède déjà des volumes, réinitialisez les volumes avant de redémarrer afin que PostgreSQL/Redis soient initialisés avec les nouveaux identifiants. Utilisez `docker compose down -v` uniquement si vous acceptez de supprimer les données locales.
-
-### 2. Démarrer toute la stack
-
-Depuis `A26_5A6_01-Infra` :
-
-```bash
-docker compose up --build -d
-docker compose ps
-```
-
-Au premier démarrage, PostgreSQL crée automatiquement :
-
-- `chatvardage_auth`, propriétaire `auth_service`
-- `chatvardage_rooms`, propriétaire `room_service`
-- `chatvardage_messages`, propriétaire `message_service`
-- `chatvardage_config`, propriétaire `config_service`
-
-Les tables métier sont ensuite créées par les migrations propres à chaque microservice. Infra ne crée pas les tables applicatives.
+Le `.env` généré est privé et ne doit jamais être committé. En production, fournir de vrais secrets; les valeurs de développement sont refusées par les services qui les valident.
 
 ### 3. Vérifier que la stack est prête
 
@@ -104,7 +77,7 @@ Sous Linux/macOS, la vérification automatisée peut aussi être lancée avec :
 
 `NODE_ENV=production` dans `.env` active, dans Authentification, Room-Service, Message-Service et User-Config-Service, un refus de démarrer avec les secrets de développement de `.env.example` (`JWT_SECRET`, `INTERNAL_SERVICE_TOKEN`, mots de passe PostgreSQL et Redis). Remplacer chacun par une vraie valeur (`openssl rand -hex 32`) ; le message d'erreur de chaque service liste ce qui manque.
 
-Le Dashboard exige aussi deux secrets distincts de 32 caracteres minimum : `DASHBOARD_COOKIE_SECRET` et `DASHBOARD_SESSION_SECRET`. Generer chacun avec `openssl rand -hex 32`. Compose refuse de demarrer si `DASHBOARD_SESSION_SECRET` est absent ou vide.
+Le Dashboard reçoit deux secrets distincts générés dans `.env` : `DASHBOARD_COOKIE_SECRET` et `DASHBOARD_SESSION_SECRET`. En production, ils doivent chacun contenir au moins 32 caractères.
 
 ## Connexions
 
