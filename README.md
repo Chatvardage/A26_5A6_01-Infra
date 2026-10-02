@@ -118,6 +118,21 @@ Ports locaux : PostgreSQL `5432`, Redis `6379`, Adminer `8081`, Gateway `3000`, 
 
 Pour lancer exceptionnellement un microservice sur la machine hôte plutôt que dans Docker, utilisez `localhost` à la place du nom de service Docker et reprenez les identifiants générés dans `.env`.
 
+Les variables à reprendre sont notamment :
+
+- Auth : `AUTH_DB_USER`, `AUTH_DB_PASSWORD`, `AUTH_DB`
+- Room : `ROOMS_DB_USER`, `ROOMS_DB_PASSWORD`, `ROOMS_DB`
+- Message : `MESSAGES_DB_USER`, `MESSAGES_DB_PASSWORD`, `MESSAGES_DB`
+- User-Config : `CONFIG_DB_USER`, `CONFIG_DB_PASSWORD`, `CONFIG_DB`
+- Redis : `REDIS_PASSWORD`
+
+Exemple de forme pour un service lancé sur l'hôte :
+
+```text
+DATABASE_URL=postgresql://<USER>:<PASSWORD>@localhost:5432/<DATABASE>
+REDIS_URL=redis://:<REDIS_PASSWORD>@localhost:6379
+```
+
 ## Tester avec Room-Service
 ```bash
 # 1. Dans Infra

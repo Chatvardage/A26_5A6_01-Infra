@@ -24,7 +24,7 @@ fi
 # Vérifie d'abord que chaque conteneur requis existe, tourne et est healthy.
 failed=0
 for service in $required_services; do
-  if ! container_id=$(docker compose ps -q "$service"); then
+  if ! container_id=$(docker compose ps -q "$service" | head -n 1); then
     echo "$service : impossible de lire l'état" >&2
     failed=1
     continue
@@ -74,6 +74,8 @@ done
 fi
 
 echo "== Redis =="
+# REDISCLI_AUTH est fourni par le conteneur redis (voir docker-compose.yml) ;
+# redis-cli s'authentifie donc sans option -a explicite.
 if ! redis_reply=$(docker compose exec -T redis redis-cli ping); then
   echo "Impossible d'interroger Redis." >&2
   exit 1

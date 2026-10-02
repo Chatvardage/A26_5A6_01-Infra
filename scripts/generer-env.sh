@@ -11,7 +11,7 @@ TEMPLATE="$INFRA_DIR/.env.example"
 TARGET="$INFRA_DIR/.env"
 FORCE=0
 
-if [ "${1:-}" = "--force" ]; then
+if [ "$#" -eq 1 ] && [ "${1:-}" = "--force" ]; then
   FORCE=1
 elif [ "$#" -gt 0 ]; then
   echo "Usage: $0 [--force]" >&2
