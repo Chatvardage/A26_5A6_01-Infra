@@ -14,7 +14,7 @@ Microservice des **serveurs et salons** de Chatvardage , sur le modèle de Disco
 
 - **Serveur** : public (trouvable par recherche, rejoignable librement) ou privé (sur invitation seulement). Tout utilisateur peut en créer un et en devient **propriétaire** ; un salon `#général` est créé avec lui.
 - **Salon** : visible par tous les membres du serveur, sauf s'il est **réservé aux modérateurs** (`acces: 'moderateurs'`). Son **écriture** peut aussi être réservée aux modérateurs (`ecriture: 'moderateurs'`, ex. `#annonces`).
-- **Rôles, par serveur** : `proprietaire` (`Server.ownerId`), `moderateur`, `membre`. L'`admin` global d'Authentification a tous les droits partout. Le rôle global `moderateur` d'Authentification n'accorde **aucun** droit ici : la modération est propre à chaque serveur.
+- **Rôles, par serveur** : `proprietaire` (`Server.ownerId`), `moderateur`, `membre`. L'`admin` global d'Authentification a tous les droits partout. Il n'existe pas de modérateur global : la modération est propre à chaque serveur.
 - **Serveur par défaut « Chatvardage »** : créé par migration, public, sans propriétaire (géré par les admins). Tout utilisateur y est ajouté automatiquement au premier `GET /api/servers`, que le Frontend appelle dès l'ouverture de session (donc dès l'inscription), et ne peut pas le quitter. L’arrivée initiale dans le serveur par défaut ne déclenche pas de diffusion globale; les changements effectifs de rôles et salons sont notifiés. Il contient `#annonces` (lecture pour tous, écriture réservée aux modérateurs, donc aux admins) et `#général`. Identifiants figés (partagés avec Message-Service, qui y insère le message de bienvenue) : voir `src/servers/default-server.ts`. Le Frontend affiche ces deux salons dans la langue de l'utilisateur (`#annonces`/`#announcements`, `#général`/`#general`) en les reconnaissant à leur identifiant **et** à leur nom d'origine : un salon renommé s'affiche tel quel, sans traduction.
 
 Format d'un serveur :
@@ -128,7 +128,7 @@ Toutes les routes sont préfixées par `/api` et exigent un JWT, sauf mention co
 | GET | `/api/internal/channels/:id/access/:userId?role=` | en-tête `x-internal-token` = `INTERNAL_SERVICE_TOKEN` | `{ salonId, serveurId, estMembre, peutLire, peutEcrire, peutModerer }` (`peutModerer` : modérateur du serveur, propriétaire ou admin, qui peut supprimer les messages des autres) |
 | DELETE | `/api/internal/users/:userId` | idem (appelée par Authentification) | Compte supprimé : ses serveurs (et leurs salons) sont supprimés, il quitte les autres, ses invitations reçues disparaissent. Idempotent. Réponse `{ serveursSupprimes, serveursQuittes, invitationsSupprimees }` |
 
-`role` est le rôle global (`admin` \| `moderateur` \| `utilisateur`, défaut `utilisateur`) issu du JWT que Message-Service a déjà validé. Sans `INTERNAL_SERVICE_TOKEN` configuré, la route répond toujours 503 (échec fermé). **Serveur-API ne relaie pas `/api/internal`** : seuls les autres microservices, sur le réseau Docker interne, peuvent l'appeler. Le port du Room-Service ne doit pas être exposé publiquement.
+`role` est le rôle global (`admin` \| `utilisateur`, défaut `utilisateur`) issu du JWT que Message-Service a déjà validé. Sans `INTERNAL_SERVICE_TOKEN` configuré, la route répond toujours 503 (échec fermé). **Serveur-API ne relaie pas `/api/internal`** : seuls les autres microservices, sur le réseau Docker interne, peuvent l'appeler. Le port du Room-Service ne doit pas être exposé publiquement.
 
 ### Anciennes routes (retirées)
 

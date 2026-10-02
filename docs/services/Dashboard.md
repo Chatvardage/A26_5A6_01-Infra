@@ -38,7 +38,8 @@ le service Authentification pour la connexion et refuse les comptes dont le rôl
 n'est pas `admin`.
 
 Une fois connecté, il permet de créer, lister et supprimer les utilisateurs, les
-salons et les messages récents (50 DM par défaut et 100 messages par salon). Les opérations sont relayées aux
+salons et les messages. La liste des messages réunit tous les DM et tous les
+messages de salon, affichés par pages dans AdminJS. Les opérations sont relayées aux
 services propriétaires; le dashboard ne contient ni base de données ni données
 simulées.
 
@@ -63,8 +64,17 @@ dont le binaire natif est requis par le bundler AdminJS. Le Dockerfile autorise
 | Utilisateurs | Authentification: `GET/POST /api/users`, `PATCH /api/users/:id/role` (compte créé comme administrateur), `DELETE /api/users/:id` |
 | Serveurs | Room-Service: `GET /api/admin/servers`, `GET /api/servers/:id`, `POST /api/servers`, `DELETE /api/servers/:id` |
 | Salons | Room-Service: `POST /api/servers/:id/channels`, `DELETE /api/channels/:id` |
-| Messages privés | Message-Service: `GET/POST /api/messages/admin`, `DELETE /api/messages/admin/:id` |
-| Messages de salon | Message-Service: `GET /api/messages/rooms/:channelId/history?limit=100`, `POST /api/messages/rooms/:channelId/admin`, `DELETE /api/messages/rooms/:channelId/:id` |
+| Messages privés | Message-Service: `GET /api/messages/admin?limit=100&cursor=`, `POST /api/messages/admin`, `DELETE /api/messages/admin/:id` |
+| Messages de salon | Message-Service: `GET /api/messages/rooms/:channelId/history?limit=100&cursor=`, `POST /api/messages/rooms/:channelId/admin`, `DELETE /api/messages/rooms/:channelId/:id` |
+
+### Pagination des messages
+
+Message-Service renvoie au plus 100 messages par appel, avec un curseur
+(`cursor` = identifiant du plus ancien message déjà reçu). Le Dashboard suit
+ces curseurs jusqu’à une page incomplète, pour les DM comme pour chaque salon,
+puis AdminJS découpe la liste complète en pages, avec le tri et les filtres.
+Par chargement, une source (les DM, ou un salon) est plafonnée à 50 pages,
+soit 5 000 messages ; au-delà, un avertissement est journalisé.
 
 ### Limites connues
 

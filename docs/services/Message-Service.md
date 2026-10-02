@@ -51,7 +51,7 @@ avec l'en-tête `x-internal-token: {INTERNAL_SERVICE_TOKEN}`, et reçoit
 - Modification / suppression : `peutLire` requis (un membre expulsé ne touche plus à ses messages), puis être l’auteur pour modifier; pour supprimer, être l’auteur ou disposer de `peutModerer`.
 - Salon introuvable : **404** ; Room-Service indisponible, en timeout, ou `INTERNAL_SERVICE_TOKEN` absent ou refusé : **503** ; réponse 2xx au format inattendu : **502**.
 
-Le rôle global transmis (`admin` \| `moderateur` \| `utilisateur`) est celui qu'Auth-Service a renvoyé pour le JWT ; seul `admin` a des droits particuliers côté Room-Service.
+Le rôle global transmis (`admin` \| `utilisateur`) est celui qu'Auth-Service a renvoyé pour le JWT ; seul `admin` a des droits particuliers côté Room-Service. Les modérateurs sont ceux de chaque serveur.
 
 Un accès obtenu est mémorisé `ROOM_ACCESS_CACHE_TTL_MS` millisecondes (10 000 par défaut, `0` pour interroger Room-Service à chaque fois), par salon, utilisateur et rôle. Chaque changement de serveur signalé par Room-Service (voir « Changements de serveur ») oublie aussitôt tous les accès à ce serveur, avant la revérification des sockets : une expulsion ou un salon rendu réservé est donc pris en compte immédiatement. Les erreurs ne sont jamais mémorisées.
 

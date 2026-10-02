@@ -24,7 +24,7 @@ Une stack Docker isolée a été construite depuis les sources avec des volumes 
 
 - Swagger de Message-Service servi sur `/docs` (14 routes REST, version 1.0.0), comme ceux de Room et User-Config.
 - Construction et démarrage des neuf conteneurs réussis; PostgreSQL, Redis, les services et le Dashboard sont en santé.
-- Connexion SQL vérifiée à chacune des quatre bases. Migrations appliquées : Authentification 4, Room 3, Message 3, Configuration 3.
+- Connexion SQL vérifiée à chacune des quatre bases. Migrations appliquées : Authentification 4, Room 3, Message 3, Configuration 3. La migration Authentification `retirer_role_moderateur_global`, ajoutée ensuite, s’applique au démarrage (5 migrations) et convertit un ancien compte `moderateur` en `utilisateur`; `PATCH /api/users/:id/role` refuse désormais `moderateur` (400).
 - Le healthcheck réussit avec la stack complète et échoue lorsque le Dashboard est arrêté; il réussit de nouveau après restauration.
 - Deux clients Socket.IO authentifiés reçoivent le même DM; lecture REST, modification et suppression vérifiées.
 - Un message envoyé pendant une déconnexion revient dans l’historique REST après reconnexion. Le test de page du desktop vérifie aussi le déclenchement de la relecture et l’affichage du message manqué.
@@ -32,6 +32,7 @@ Une stack Docker isolée a été construite depuis les sources avec des volumes 
 - Accès administrateur refusé à un utilisateur ordinaire; accès anonyme au Dashboard redirigé vers la connexion.
 - L’action réelle AdminJS de création renvoie une erreur pour un courriel déjà utilisé, sans redirection de réussite. Une création valide réussit.
 - Suppression d’un utilisateur, d’un salon et d’un message par les actions du Dashboard vérifiée auprès des API; refus des opérations non autorisées vérifié.
+- Pagination des messages du Dashboard : avec 250 DM en base, l’API AdminJS annonce un total de 250 et sert des pages de 10 jusqu’à la 25e (auparavant, seuls les 50 plus récents étaient chargés).
 
 ## Portée et vérifications complémentaires
 

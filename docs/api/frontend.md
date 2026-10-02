@@ -83,7 +83,7 @@ oublie la room et la rejoindra si l'accès revient), `session.revoquee`
 verifierSessionApres401, au lieu de se reconnecter en boucle), `typing`
 (éphémère, salon et DM).
 
-**Rôles et autorisation** : Room-Service décide des droits selon le rôle dans le serveur (propriétaire, modérateur, membre); seul `admin` est global. Le rôle `moderateur` d’Auth ne donne pas de droits universels.
+**Rôles et autorisation** : Room-Service décide des droits selon le rôle dans le serveur (propriétaire, modérateur, membre); seul `admin` est global. Il n’existe pas de modérateur global.
 
 **Présence et profils** : événements `presence.changed` pour les utilisateurs suivis et `profil.changed` après enregistrement. REST réconcilie la présence et recharge les profils après reconnexion. Une connexion Socket.IO authentifiée émet `synchronisation-requise` côté runtime; les pages rechargent explicitement leur état et historique REST.
 

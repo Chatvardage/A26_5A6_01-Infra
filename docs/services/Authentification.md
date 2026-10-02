@@ -39,8 +39,9 @@ Fournit une API REST pour :
 - l'inscription et la connexion (courriel **ou** pseudo + mot de passe) ;
 - l'émission de jetons JWT utilisés ensuite par le client desktop pour
   s'authentifier auprès des autres services (messages privés, etc.) ;
-- la gestion des comptes et des rôles (`admin`, `moderateur`,
-  `utilisateur`) pour le panneau d'administration de l'équipe.
+- la gestion des comptes et des rôles globaux (`admin`, `utilisateur`) pour
+  le panneau d'administration de l'équipe. Le modérateur n'existe que dans
+  les serveurs (Room-Service).
 
 La persistance des comptes se fait dans PostgreSQL, source de vérité. Ce service n'a pas besoin de Redis : Redis sert au
 service de messagerie temps réel pour diffuser les événements, pas à
@@ -180,7 +181,7 @@ les commentaires dans `prisma/schema.prisma` pour le détail) :
 | `courriel` | texte | unique, non nul |
 | `mot_de_passe_hache` | texte | non nul (hash Argon2, jamais le mot de passe en clair) |
 | `version_auth` | entier | non nul, incrémenté à chaque changement de mot de passe ou de rôle pour révoquer les JWT antérieurs |
-| `role` | texte | non nul, valeurs attendues : `admin`, `moderateur`, `utilisateur` (défaut : `utilisateur`) |
+| `role` | texte | non nul, valeurs attendues : `admin`, `utilisateur` (défaut : `utilisateur`). La migration `retirer_role_moderateur_global` convertit les anciens `moderateur` en `utilisateur` |
 | `cree_le` | horodatage avec fuseau | non nul |
 | `modifie_le` | horodatage avec fuseau | non nul |
 

@@ -21,12 +21,13 @@ Les routes marquées 🔒👑 exigent en plus que l'utilisateur ait le rôle `ad
 
 ## Permissions — qui peut faire quoi
 
-Trois rôles existent (`admin`, `moderateur`, `utilisateur` — voir
-`src/domain/utilisateur.rs`). Un `utilisateur` et un `moderateur` ont
-exactement les mêmes droits **sur ce service** : gérer leur propre compte,
-rien d'autre. Les droits de modération sont définis par serveur dans Room-Service; seul admin est global.
+Deux rôles globaux existent (`admin` et `utilisateur` — voir
+`src/domain/utilisateur.rs`). Un `utilisateur` ne peut gérer que son propre
+compte. Le modérateur n'est **pas** un rôle global : il n'existe qu'à
+l'intérieur d'un serveur (propriétaire, modérateur, membre), géré par
+Room-Service. Seul `admin` a des droits partout.
 
-| Action | `utilisateur` / `moderateur` | `admin` |
+| Action | `utilisateur` | `admin` |
 |--------|:---:|:---:|
 | Créer un compte (inscription) | ✅ (le sien, `/register`) | ✅ (le sien, `/register`) |
 | Lire son propre profil | ✅ `GET /api/auth/me` | ✅ `GET /api/auth/me` |
@@ -43,8 +44,8 @@ rien d'autre. Les droits de modération sont définis par serveur dans Room-Serv
 
 Seul un `admin`, via `PATCH /api/users/{id}/role`, peut changer le rôle
 d'un compte non-admin. Ni son propre rôle ni celui d'un autre admin ne
-peuvent être modifiés. Un utilisateur ou modérateur ne peut jamais
-s'auto-promouvoir `admin`.
+peuvent être modifiés. Un utilisateur ne peut jamais s'auto-promouvoir
+`admin`.
 
 ---
 
@@ -459,10 +460,11 @@ son propre rôle ni celui d'un autre admin (voir
 **Corps de la requête**
 
 ```json
-{ "role": "moderateur" }
+{ "role": "admin" }
 ```
 
-Valeurs possibles : `admin`, `moderateur`, `utilisateur`.
+Valeurs possibles : `admin`, `utilisateur`. `moderateur` est refusé (`400`) :
+la modération se gère par serveur, dans Room-Service.
 
 **Réponse `200`** : l'objet utilisateur mis à jour.
 

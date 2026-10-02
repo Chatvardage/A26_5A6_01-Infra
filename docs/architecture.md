@@ -72,7 +72,7 @@ Une publication Redis échouée n’annule pas l’écriture PostgreSQL. Redis P
 
 Les configurations sont écrites/lues en REST dans User-Config. Le processus principal Electron applique les préférences et les diffuse aux vues par IPC. Les changements de profil public sont annoncés après enregistrement; les données restent relues par REST.
 
-`admin` est un rôle global. Les rôles propriétaire/modérateur/membre des serveurs sont gérés par Room-Service; le rôle global `moderateur` ne donne pas automatiquement des droits sur tous les serveurs. Les routes internes exigent `x-internal-token` et ne sont pas relayées publiquement par le Gateway.
+`admin` est un rôle global. Les rôles propriétaire/modérateur/membre des serveurs sont gérés par Room-Service : il n’existe pas de modérateur global, Authentification ne connaît que `admin` et `utilisateur`. Les routes internes exigent `x-internal-token` et ne sont pas relayées publiquement par le Gateway.
 
 ## Limites et exploitation
 
