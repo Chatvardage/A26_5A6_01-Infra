@@ -48,7 +48,8 @@ foreach ($name in $secretNames) {
 }
 
 $content = [System.IO.File]::ReadAllText($Template)
-# Normaliser les fins de ligne avant remplacement pour produire un fichier cohérent.
+# Normaliser volontairement en LF, même sous Windows : Docker et les scripts Unix
+# consomment ainsi exactement le même format de .env sur toutes les plateformes.
 $content = $content -replace "`r`n", "`n" -replace "`r", "`n"
 foreach ($name in $secretNames) {
     $escaped = [regex]::Escape($name)

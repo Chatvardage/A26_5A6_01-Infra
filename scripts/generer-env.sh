@@ -5,7 +5,7 @@ set -eu
 # toutes les valeurs sensibles par des secrets hexadécimaux aléatoires.
 # Usage : ./scripts/generer-env.sh [--force]
 
-SCRIPT_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 INFRA_DIR=$(dirname "$SCRIPT_DIR")
 TEMPLATE="$INFRA_DIR/.env.example"
 TARGET="$INFRA_DIR/.env"

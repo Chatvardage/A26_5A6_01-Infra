@@ -9,10 +9,7 @@ const { spawnSync } = require('node:child_process');
 const scenario = JSON.parse(process.env.HEALTHCHECK_SCENARIO || '{}');
 const services = ['postgres', 'redis', 'auth-service', 'room-service', 'message-service', 'user-config-service', 'dashboard', 'serveur-api'];
 const databases = ['local_auth', 'local_rooms', 'local_messages', 'local_config'];
-const log = (entry) => {
-  if (!process.env.HEALTHCHECK_LOG) throw new Error('HEALTHCHECK_LOG est requis en mode utilitaire');
-  fs.appendFileSync(process.env.HEALTHCHECK_LOG, JSON.stringify(entry) + '\n');
-};
+const log = (entry) => fs.appendFileSync(process.env.HEALTHCHECK_LOG, JSON.stringify(entry) + '\n');
 
 if (process.env.HEALTHCHECK_FETCH_FIXTURE) {
   global.fetch = async (url, options) => {
@@ -82,7 +79,7 @@ if (process.env.HEALTHCHECK_FETCH_FIXTURE) {
   after(() => fs.rmSync(temporary, { recursive: true, force: true }));
 
   function run(input = {}, args = []) {
-    const logfile = path.join(temporary, 'calls.jsonl');
+    const logfile = path.join(temporary, `calls-${process.pid}-${Date.now()}-${Math.random().toString(16).slice(2)}.jsonl`);
     fs.writeFileSync(logfile, '');
     const result = spawnSync(shell, ['-c', 'PATH="$1:$PATH"; export PATH; shift; exec sh "$@"', '_', posix(bin), posix(path.join(repo, 'scripts/healthcheck.sh')), ...args], {
       cwd: repo, encoding: 'utf8', timeout: 20000,
