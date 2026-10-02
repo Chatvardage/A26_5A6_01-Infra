@@ -93,14 +93,28 @@ La liste des serveurs est chargée par pages de 100, jusqu’à 50 pages
 (5 000 serveurs). Au-delà, le chargement s’arrête avec un avertissement dans
 les journaux : une pagination côté AdminJS serait alors nécessaire.
 
+### Dépendances et audit
+
 La CI du dépôt Dashboard (`.github/workflows/ci.yml`) exécute `npm audit` au seuil `critical`.
-Les avis restants (`tinymce`, `@tiptap/*`, `react-router`, `uuid`,
-`i18next-http-backend`) viennent tous d’`adminjs` 7.8.17 et
-`@adminjs/design-system` 4.1.1, les dernières versions publiées. Ces paquets
-livrent des bundles navigateur déjà compilés : forcer des versions avec
-`overrides` ferait taire `npm audit` sans changer le code servi. Le dashboard
-n’utilise pas l’éditeur riche (`richtext`), seulement des champs `textarea`.
-`@adminjs/express` est figé à `5.1.0` : surveiller ses avis manuellement.
+Depuis le 2 octobre, `npm audit --omit=dev` ne signale plus aucune vulnérabilité.
+Les avis venaient de dépendances d’`adminjs` 7.8.17 et
+d’`@adminjs/design-system` 4.1.1, les dernières versions publiées. Le
+`package.json` force désormais leurs versions avec `overrides` : `tinymce` 8,
+`@tiptap/*` 3.31.4, `react-router` 7.18.4, `uuid` 11 et
+`i18next-http-backend` 3. `patch-package` applique
+`patches/@adminjs+design-system+4.1.1.patch` après chaque installation, pour
+adapter l’éditeur riche aux imports de Tiptap 3.
+
+**Limite** : ce correctif change l’arbre `node_modules`, mais pas le code
+envoyé au navigateur. AdminJS sert
+`@adminjs/design-system/bundle.production.js`
+(`/frontend/assets/design-system.bundle.js`), un bundle précompilé qui
+embarque ses propres copies : il contient toujours `tinymce` 6.8.2. Le patch
+ne touche que les fichiers `build/`, qui ne sont pas servis. Le risque reste
+faible, car le Dashboard n’utilise pas l’éditeur riche (`richtext`), seulement
+des champs `textarea`. Une vraie correction demande une version d’AdminJS qui
+reconstruit ses bundles. `@adminjs/express` est figé à `5.1.0` : surveiller
+ses avis manuellement.
 
 ## Configuration
 
