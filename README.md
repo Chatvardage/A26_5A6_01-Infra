@@ -60,6 +60,33 @@ Le healthcheck vérifie réellement : les états `running healthy` des huit cont
 
 Le script s’appuie sur l’environnement des conteneurs, n’exécute pas `.env` comme du code et ne nécessite pas `curl` sur l’hôte.
 
+### Problèmes de permissions
+
+Lors d'un clone sur une nouvelle distro de Linux, il se pourrait que vous rencontriez des problèmes de permissions. 
+
+Effectuez ces commandes pour les régler :
+
+```bash
+# Permissions des fichiers utilisés dans les images
+chmod go+r A26_5A6_01-{Room-Service,User-Config-Service,Message-Service}/package*.json
+chmod -R go+rX A26_5A6_01-{Room-Service,User-Config-Service,Message-Service}/prisma
+
+cd A26_5A6_01-Infra
+
+# Permissions des fichiers montés dans les conteneurs
+chmod go+x . scripts postgres
+chmod go+rx postgres/init postgres/init/00-create-databases.sh
+chmod go+r scripts/docker-entrypoint-env.sh
+
+# Reconstruction et redémarrage
+docker compose build room-service user-config-service message-service
+docker compose restart postgres
+docker compose up -d --wait --wait-timeout 240
+
+# Vérification finale
+./scripts/healthcheck.sh
+```
+
 ### Résultats consignés (2 octobre 2026)
 
 Clone propre sans `.env`, volumes neufs : `docker compose up --build -d --wait`, puis `./scripts/healthcheck.sh` :
