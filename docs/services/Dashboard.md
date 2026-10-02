@@ -100,7 +100,9 @@ La CI du dépôt Dashboard (`.github/workflows/ci.yml`) exécute
 `npm audit` ne signale aucune vulnérabilité haute ou critique ; il reste des
 avis de sévérité modérée.
 
-Ces avis modérés viennent de `@tiptap/*` 2.1.13, épinglé par
+Ces avis ([GHSA-cp6q-959q-f8rh](https://github.com/advisories/GHSA-cp6q-959q-f8rh),
+modéré, sur `@tiptap/core`, et [GHSA-vhrc-hgrq-x75r](https://github.com/advisories/GHSA-vhrc-hgrq-x75r),
+faible, sur `@tiptap/extension-link`) viennent de `@tiptap/*` 2.1.13, épinglé par
 `@adminjs/design-system` 4.1.1 (dépendance d’`adminjs` 7.8.17, dernière
 version publiée). Le correctif exige tiptap 3.30.4 ou plus, incompatible avec
 cette version du design system ; `npm audit fix --force` ne propose qu’une
@@ -113,11 +115,14 @@ Le `package.json` force certaines versions avec `overrides` :
 `typescript-estree` 6.x épingle `minimatch` 9.0.3, vulnérable (sévérité haute) ;
 cet override est temporaire et sera retiré lors du passage à typescript-eslint 8.
 
-Retiré le 2 octobre (commit « fix audit » du Dashboard) : l’override
+Retiré le 2 octobre 2026 (commit `f352e2a` « fix audit » du Dashboard) : l’override
 `@tiptap/*` 3.31.4 et le patch `patch-package` qui adaptait
 `@adminjs/design-system` à Tiptap 3. Ils ne changeaient pas le bundle
 précompilé servi au navigateur (voir la limite ci-dessous). `@adminjs/express`
-n’est plus figé : il est en 6.1.1, couvert par `npm audit` comme le reste.
+n’est plus figé : il est en 6.1.1, sans avis connu à ce jour. Sa
+compatibilité avec `adminjs` 7.8.17 est vérifiée par le test
+`src/adminjs-express.spec.ts` du Dashboard (`buildAuthenticatedRouter` exposé
+sur l’import par défaut utilisé par `main.ts`).
 
 **Limite** : ces `overrides` changent l’arbre `node_modules`, mais pas le code
 envoyé au navigateur. AdminJS sert
