@@ -14,13 +14,11 @@ Point de départ du projet complet : client Electron, API Gateway, quatre servic
 
 Cloner les huit dépôts ci-dessous côte à côte.
 
-Pour WSL/Linux/Mac
-
 ```bash
 mkdir Chatvardage
 cd Chatvardage
 for repo in Infra Frontend Serveur-API Authentification Room-Service Message-Service User-Config-Service Dashboard; do
-  git clone --branch main "https://github.com/Chatvardage/A26_5A6_01-$repo.git"
+  git clone --branch main "git@github.com:Chatvardage/A26_5A6_01-$repo.git"
 done
 cd A26_5A6_01-Infra
 ```
