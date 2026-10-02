@@ -25,25 +25,6 @@ done
 cd A26_5A6_01-Infra
 ```
 
-Pour Powershell
-
-```ps
-$repos = @(
-    "Frontend"
-    "Serveur-API"
-    "Authentification"
-    "Room-Service"
-    "Message-Service"
-    "User-Config-Service"
-    "Dashboard"
-    "Infra"
-)
-
-foreach ($repo in $repos) {
-    git clone --branch main "https://github.com/Chatvardage/A26_5A6_01-$repo.git"
-}
-```
-
 Aucun `.env` à préparer : au premier `docker compose up`, le service `generer-env` (conteneur Alpine) exécute `scripts/generer-env.sh`. Il crée `.env` à partir de `.env.example` avec dix secrets aléatoires distincts (PostgreSQL, Redis, JWT, jeton interne, Dashboard). Les autres services attendent cette étape, puis chargent ce fichier au démarrage. Un `.env` existant est conservé : les secrets restent stables d’un démarrage à l’autre.
 
 Pour régénérer les secrets : `./scripts/generer-env.sh --force` (ou `.\scripts\generer-env.ps1 -Force` en PowerShell). PostgreSQL et Redis gardent alors les anciens identifiants dans leurs volumes : réinitialiser les volumes (`docker compose down -v`, qui efface les données) avant de redémarrer. Le `.env` généré ne doit jamais être commité. Ce Compose sert au développement local; ce n’est pas un déploiement de production.
@@ -67,7 +48,7 @@ Chatvardage/
 ```bash
 docker compose up --build -d --wait --wait-timeout 240
 docker compose ps
-./scripts/healthcheck.sh   # Ajouter bash avant la commande si sur Powershell
+./scripts/healthcheck.sh
 ```
 
 `docker compose up --build` fonctionne aussi au premier plan. Au premier démarrage, PostgreSQL crée quatre bases et leurs propriétaires; les services appliquent automatiquement leurs migrations avant de devenir sains.
