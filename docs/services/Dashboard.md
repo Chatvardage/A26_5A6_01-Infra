@@ -98,7 +98,7 @@ les journaux : une pagination côté AdminJS serait alors nécessaire.
 La CI du dépôt Dashboard (`.github/workflows/ci.yml`) exécute
 `npm audit --audit-level=high` sur toutes les dépendances, dev comprises.
 `npm audit` ne signale aucune vulnérabilité haute ou critique ; il reste des
-avis de sévérité modérée.
+avis de sévérité modérée ou faible.
 
 Ces avis ([GHSA-cp6q-959q-f8rh](https://github.com/advisories/GHSA-cp6q-959q-f8rh),
 modéré, sur `@tiptap/core`, et [GHSA-vhrc-hgrq-x75r](https://github.com/advisories/GHSA-vhrc-hgrq-x75r),
@@ -115,7 +115,7 @@ Le `package.json` force certaines versions avec `overrides` :
 `typescript-estree` 6.x épingle `minimatch` 9.0.3, vulnérable (sévérité haute) ;
 cet override est temporaire et sera retiré lors du passage à typescript-eslint 8.
 
-Retiré le 2 octobre 2026 (commit `f352e2a` « fix audit » du Dashboard) : l’override
+Retiré le 2 octobre 2026 (commit `Chatvardage/A26_5A6_01-Dashboard@f352e2a`, « fix audit ») : l’override
 `@tiptap/*` 3.31.4 et le patch `patch-package` qui adaptait
 `@adminjs/design-system` à Tiptap 3. Ils ne changeaient pas le bundle
 précompilé servi au navigateur (voir la limite ci-dessous). `@adminjs/express`
