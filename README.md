@@ -6,8 +6,7 @@ Point de départ du projet complet : client Electron, API Gateway, quatre servic
 
 - Git et accès aux huit dépôts privés de l’organisation **Chatvardage**.
 - Docker Engine 25+ / Docker Desktop avec Compose v2; Docker démarré.
-- Bash sous Linux/macOS ou WSL sous Windows pour les scripts. Les commandes ci-dessous sont en Bash/WSL; la génération du `.env` existe aussi en PowerShell.
-- `openssl` pour générer le `.env` sous Linux/macOS/WSL (présent par défaut sur ces systèmes). Sous Windows, PowerShell suffit.
+- Bash sous Linux/macOS ou WSL sous Windows pour les scripts. Les commandes ci-dessous sont en Bash/WSL.
 - Pour le client desktop depuis les sources : Node.js 22, npm et un bureau graphique. Le backend n’exige ni Rust, ni Node, ni PostgreSQL installés sur l’hôte.
 - Ports locaux libres : 3000 à 3005, 5432, 6379 et 8081. Ne pas lancer les Compose individuels en même temps que la stack globale.
 
@@ -22,12 +21,11 @@ for repo in Infra Frontend Serveur-API Authentification Room-Service Message-Ser
   git clone --branch main "https://github.com/Chatvardage/A26_5A6_01-$repo.git"
 done
 cd A26_5A6_01-Infra
-./scripts/generer-env.sh
 ```
 
-Sous Windows sans WSL, depuis PowerShell dans `A26_5A6_01-Infra` : `.\scripts\generer-env.ps1`.
+Aucun `.env` à préparer : au premier `docker compose up`, le service `generer-env` (conteneur Alpine) exécute `scripts/generer-env.sh`. Il crée `.env` à partir de `.env.example` avec dix secrets aléatoires distincts (PostgreSQL, Redis, JWT, jeton interne, Dashboard). Les autres services attendent cette étape, puis chargent ce fichier au démarrage. Un `.env` existant est conservé : les secrets restent stables d’un démarrage à l’autre.
 
-Ne pas copier simplement `.env.example` : le script reprend la configuration du modèle et génère des secrets aléatoires distincts pour PostgreSQL, Redis, JWT, le jeton interne et le Dashboard. Il refuse d’écraser un `.env` existant; `--force` (ou `-Force` en PowerShell) le régénère. Après une régénération sur une stack qui a déjà des volumes, PostgreSQL et Redis gardent les anciens identifiants : réinitialiser les volumes (`docker compose down -v`, qui efface les données) avant de redémarrer. Le `.env` généré ne doit jamais être commité. Ce Compose sert au développement local; ce n’est pas un déploiement de production.
+Pour régénérer les secrets : `./scripts/generer-env.sh --force` (ou `.\scripts\generer-env.ps1 -Force` en PowerShell). PostgreSQL et Redis gardent alors les anciens identifiants dans leurs volumes : réinitialiser les volumes (`docker compose down -v`, qui efface les données) avant de redémarrer. Le `.env` généré ne doit jamais être commité. Ce Compose sert au développement local; ce n’est pas un déploiement de production.
 
 Pour reproduire une version, utiliser les tags ou commits validés indiqués dans le [guide des versions](docs/versions.md).
 
@@ -64,7 +62,7 @@ Le script s’appuie sur l’environnement des conteneurs, n’exécute pas `.en
 
 ### Résultats consignés (2 octobre 2026)
 
-Stack construite depuis les sources avec des volumes neufs : `./scripts/generer-env.sh`, `docker compose up --build -d --wait`, puis `./scripts/healthcheck.sh` :
+Clone propre sans `.env`, volumes neufs : `docker compose up --build -d --wait`, puis `./scripts/healthcheck.sh` :
 
 ```text
 postgres : running healthy
@@ -142,7 +140,7 @@ docker compose up -d --wait          # reprise avec les données
 docker compose logs --tail=100 auth-service room-service message-service user-config-service serveur-api dashboard
 ```
 
-- `.env` absent ou secret vide : lancer `./scripts/generer-env.sh` avant toute commande Compose.
+- `.env` invalide ou incomplet : le corriger, ou le régénérer avec `./scripts/generer-env.sh --force` puis réinitialiser les volumes (voir plus haut).
 - Chemin de build absent : vérifier les huit dossiers voisins, particulièrement Dashboard.
 - Port occupé : arrêter l’autre environnement ou choisir des ports distincts dans une configuration de test.
 - API saine mais connexion impossible : examiner Auth et les migrations; un healthcheck ne crée pas de compte.
