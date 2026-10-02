@@ -62,7 +62,14 @@ Le script s’appuie sur l’environnement des conteneurs, n’exécute pas `.en
 
 ### Problèmes de permissions
 
-Lors d'un clone sur une nouvelle distro de Linux, il se pourrait que vous rencontriez des problèmes de permissions. 
+Si vous avez des problèmes de permissions avec **Docker**, effectuez ces commandes :
+
+```bash
+sudo usermod -aG docker $USER
+newgrp docker
+```
+
+Lors d'un clone sur une nouvelle distro de Linux, il se pourrait que vous rencontriez des problèmes de permissions avec **les conteneurs**. 
 
 Effectuez ces commandes pour les régler :
 
