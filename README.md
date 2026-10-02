@@ -14,6 +14,8 @@ Point de départ du projet complet : client Electron, API Gateway, quatre servic
 
 Cloner les huit dépôts ci-dessous côte à côte.
 
+Pour WSL/Linux/Mac
+
 ```bash
 mkdir Chatvardage
 cd Chatvardage
@@ -21,6 +23,25 @@ for repo in Infra Frontend Serveur-API Authentification Room-Service Message-Ser
   git clone --branch main "https://github.com/Chatvardage/A26_5A6_01-$repo.git"
 done
 cd A26_5A6_01-Infra
+```
+
+Pour Powershell
+
+```ps
+$repos = @(
+    "Frontend"
+    "Serveur-API"
+    "Authentification"
+    "Room-Service"
+    "Message-Service"
+    "User-Config-Service"
+    "Dashboard"
+    "Infra"
+)
+
+foreach ($repo in $repos) {
+    git clone --branch main "https://github.com/Chatvardage/A26_5A6_01-$repo.git"
+}
 ```
 
 Aucun `.env` à préparer : au premier `docker compose up`, le service `generer-env` (conteneur Alpine) exécute `scripts/generer-env.sh`. Il crée `.env` à partir de `.env.example` avec dix secrets aléatoires distincts (PostgreSQL, Redis, JWT, jeton interne, Dashboard). Les autres services attendent cette étape, puis chargent ce fichier au démarrage. Un `.env` existant est conservé : les secrets restent stables d’un démarrage à l’autre.
@@ -46,7 +67,7 @@ Chatvardage/
 ```bash
 docker compose up --build -d --wait --wait-timeout 240
 docker compose ps
-./scripts/healthcheck.sh
+./scripts/healthcheck.sh   # Ajouter bash avant la commande si sur Powershell
 ```
 
 `docker compose up --build` fonctionne aussi au premier plan. Au premier démarrage, PostgreSQL crée quatre bases et leurs propriétaires; les services appliquent automatiquement leurs migrations avant de devenir sains.
