@@ -21,14 +21,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
       # Valide la syntaxe et l'interpolation (les dépôts des services ne sont
       # pas nécessaires : aucune image n'est construite).
       # Le clone propre doit être valide sans .env : le démarrage C2 se fait
       # directement avec `docker compose up -d`.
       - name: Valider Compose sans .env
         run: docker compose config -q
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           node-version: 22
       - name: Tester les scripts Infra
@@ -52,7 +52,7 @@ jobs:
         run: >-
           echo "::warning::Secret CHATVARDAGE_REPOS_TOKEN absent : vérification
           des fichiers partagés sautée (voir README, « Fichiers partagés »)."
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         if: env.JETON != ''
         with:
           path: A26_5A6_01-Infra
