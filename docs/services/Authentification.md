@@ -298,8 +298,8 @@ postgresql://auth_service:auth_service_dev@postgres:5432/chatvardage_auth
 
 ⚠️ À l'intérieur du réseau Docker d'`infra`, l'hôte est `postgres` (le nom
 du service Docker), **jamais** `localhost` — `localhost` dans le conteneur
-de ce service désigne le conteneur lui-même, pas la base de données. Voir
-[Intégration avec le reste de l'équipe](#intégration-avec-le-reste-de-léquipe).
+de ce service désigne le conteneur lui-même, pas la base de données. Voir le
+[README Infra](../../README.md) pour la stack complète.
 
 Pour arrêter : `Ctrl+C` puis `docker compose down` (ajouter `-v` pour
 aussi supprimer les données PostgreSQL locales — irréversible).

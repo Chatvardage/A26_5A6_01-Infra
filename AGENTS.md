@@ -80,7 +80,7 @@ Ces décisions ne remplacent pas les validations obligatoires avant PR indiquée
 - Logs PostgreSQL/Redis examinés : initialisation terminée et services prêts. Les trois migrations Prisma Room-Service ont été réellement appliquées sur la base neuve; une nouvelle exécution de `npx prisma migrate deploy` confirme qu’aucune migration ne reste à appliquer.
 - Room-Service validé dans une image Docker Node 22 construite avec la cible `build` de son Dockerfile (`npm ci` dans la cible de dépendances) : `npx prisma generate`, `npm run lint`, `npm test -- --runInBand` (196 tests), `npm run test:e2e -- --runInBand` (14 tests), `npm run build` et `npm run test:cov -- --runInBand` passent. Couverture : 100 % Statements, Branches, Functions et Lines.
 - Syntaxe des quatre scripts shell vérifiée avec `sh -n`; `./scripts/verifier-fichiers-partages.sh` confirme que les fichiers partagés sont identiques. Les scripts locaux ont été remis en LF et rendus exécutables conformément à Git et `.gitattributes`; cela ne change pas leur contenu versionné.
-- La construction du Dashboard réussit, mais affiche des avertissements `EBADENGINE` : son image Node 20 est plus ancienne que la version demandée par certaines dépendances. Ce point appartient au dépôt Dashboard et reste à traiter séparément.
+- La construction du Dashboard réussit, mais affiche des avertissements `EBADENGINE` : son image Node 20 est plus ancienne que la version demandée par certaines dépendances. Corrigé depuis dans le dépôt Dashboard (images `node:22-alpine`).
 - La stack de validation et ses volumes temporaires sont supprimés après les contrôles.
 
 ### Correction du CI après validation locale

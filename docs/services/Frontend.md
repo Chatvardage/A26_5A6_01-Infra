@@ -9,7 +9,15 @@ présence et messages de salon en temps réel via Socket.IO. Voir
 ## 1. Objectifs
 
 - Authentification par courriel/pseudo + mot de passe, pseudo modifiable
-  après l'inscription (unique, 3-20 caractères).
+  après l'inscription (unique, 3-20 caractères). Déconnexion depuis l'app, ou
+  « Se déconnecter partout » (tous les jetons du compte invalidés).
+- Alias (nom affiché, 50 caractères au plus) choisi dans le profil : il
+  remplace le pseudo dans l'en-tête, la liste des DM et les messages de
+  salon, chez soi comme chez les autres.
+- Ouverture directe sur le clavardage quand une session valide est
+  enregistrée ; le profil n'est ouvert qu'à la demande.
+- Préférences (alias, avatar, thème, langue, notifications) enregistrées dans
+  User-Config-Service et appliquées immédiatement à la page affichée.
 - Salons publics et privés avec invitations, gestion (créer/renommer/changer
   la visibilité/supprimer/retirer un membre) réservée aux modérateurs/admins.
 - Messages et conversations privées (DM), et messages de salon.
@@ -287,9 +295,11 @@ d'instance (`~/.config/chatvardage-2`, etc.).
 
 1. Ouvrir la page profil depuis le tableau de bord.
 2. Changer son pseudo, vérifier l'unicité (409 si déjà pris).
-3. Changer son thème/langue/mode de notification, vérifier la persistance
-   après reconnexion.
-4. Changer son mot de passe (mot de passe actuel requis) : l'app reste
+3. Définir un alias : il s'affiche aussitôt à la place du pseudo, puis chez
+   le second compte dans les messages et la liste des DM.
+4. Changer son thème/langue/mode de notification : l'interface change sans
+   rechargement ; vérifier la persistance après reconnexion.
+5. Changer son mot de passe (mot de passe actuel requis) : l'app reste
    connectée. Authentification révoque tous les jetons existants à ce
    moment-là ; l'app se reconnecte d'elle-même avec le nouveau mot de passe
    (`renouvelerJetonApresChangementMotDePasse`). Vérifier aussi qu'un mot de
