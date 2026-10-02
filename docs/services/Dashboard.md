@@ -109,8 +109,15 @@ rétrogradation vers `adminjs` 6.
 Le `package.json` force certaines versions avec `overrides` :
 `i18next-http-backend` 3, `uuid` 11 et `react-router`/`react-router-dom`
 7.18.4 sous `adminjs`, `tinymce` 8 sous `@adminjs/design-system`, et
-`minimatch` ^9.0.9 sous `@typescript-eslint/typescript-estree` (qui épingle la
-9.0.3, vulnérable ; à retirer lors du passage à typescript-eslint 8).
+`minimatch` ^9.0.9 sous `@typescript-eslint/typescript-estree`.
+`typescript-estree` 6.x épingle `minimatch` 9.0.3, vulnérable (sévérité haute) ;
+cet override est temporaire et sera retiré lors du passage à typescript-eslint 8.
+
+Retiré le 2 octobre (commit « fix audit » du Dashboard) : l’override
+`@tiptap/*` 3.31.4 et le patch `patch-package` qui adaptait
+`@adminjs/design-system` à Tiptap 3. Ils ne changeaient pas le bundle
+précompilé servi au navigateur (voir la limite ci-dessous). `@adminjs/express`
+n’est plus figé : il est en 6.1.1, couvert par `npm audit` comme le reste.
 
 **Limite** : ces `overrides` changent l’arbre `node_modules`, mais pas le code
 envoyé au navigateur. AdminJS sert
