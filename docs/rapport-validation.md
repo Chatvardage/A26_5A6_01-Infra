@@ -32,6 +32,7 @@ Une stack Docker isolée a été construite depuis les sources avec des volumes 
 - Accès administrateur refusé à un utilisateur ordinaire; accès anonyme au Dashboard redirigé vers la connexion.
 - L’action réelle AdminJS de création renvoie une erreur pour un courriel déjà utilisé, sans redirection de réussite. Une création valide réussit.
 - Suppression d’un utilisateur, d’un salon et d’un message par les actions du Dashboard vérifiée auprès des API; refus des opérations non autorisées vérifié.
+- Rôles par serveur, par l’API du Gateway : dans un serveur privé, un simple membre invité ne peut pas créer de salon (403). Nommé modérateur par le propriétaire, il crée, renomme et supprime un salon, mais ne peut ni renommer ni supprimer le serveur (403). Rétrogradé, il perd de nouveau ces droits.
 - Pagination des messages du Dashboard : avec 250 DM en base, l’API AdminJS annonce un total de 250 et sert des pages de 10 jusqu’à la 25e (auparavant, seuls les 50 plus récents étaient chargés).
 
 ## Portée et vérifications complémentaires

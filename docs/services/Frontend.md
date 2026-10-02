@@ -18,8 +18,10 @@ présence et messages de salon en temps réel via Socket.IO. Voir
   enregistrée ; le profil n'est ouvert qu'à la demande.
 - Préférences (alias, avatar, thème, langue, notifications) enregistrées dans
   User-Config-Service et appliquées immédiatement à la page affichée.
-- Salons publics et privés avec invitations, gestion (créer/renommer/changer
-  la visibilité/supprimer/retirer un membre) réservée aux modérateurs/admins.
+- Serveurs publics et privés avec invitations. Dans chaque serveur, les
+  modérateurs, le propriétaire et les admins gèrent les salons (créer,
+  renommer, supprimer) et peuvent expulser un membre de rang inférieur ; le
+  propriétaire nomme les modérateurs.
 - Messages et conversations privées (DM), et messages de salon.
 - Présence en ligne/hors ligne et indicateur « en train d'écrire ».
 - Historique paginé (« charger les messages plus anciens »).
@@ -206,17 +208,18 @@ Artifacts attendus :
 7. Fermer puis relancer l'application : vérifier que la session est reprise
    automatiquement (jeton persisté) sans repasser par l'écran de connexion.
 
-### Salon privé, invitation et gestion (modérateur/admin)
+### Serveur privé, invitation et modération
 
-1. Avec un compte modérateur ou admin, créer un salon privé.
-2. Inviter un autre utilisateur.
-3. Avec le second compte (sur une autre instance de l'app), ouvrir
-   **Invitations** puis accepter ou refuser l'invitation.
-4. Vérifier que l'accès au salon privé correspond à la réponse.
-5. Depuis le compte modérateur/admin, renommer le salon, changer sa
-   visibilité, retirer un membre, puis le supprimer — vérifier qu'un compte
-   `utilisateur` simple ne voit aucune de ces actions (ni le bouton "Créer
-   un salon").
+1. Avec le compte A, créer un serveur privé : A en devient propriétaire.
+2. Inviter B depuis ce serveur.
+3. Avec B (sur une autre instance de l'app), ouvrir **Invitations** puis
+   accepter ou refuser. Après un refus, le serveur reste inaccessible.
+4. Tant que B est simple membre, il ne voit ni le bouton « Créer un salon »
+   ni les actions de gestion.
+5. A nomme B modérateur depuis le panneau des membres. B peut alors créer,
+   renommer et supprimer un salon, et expulser un simple membre ; il ne peut
+   ni renommer ni supprimer le serveur.
+6. A retire le rôle de modérateur à B : ces actions disparaissent chez B.
 
 ### Deux comptes en parallèle
 

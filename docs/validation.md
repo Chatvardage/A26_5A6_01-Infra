@@ -32,10 +32,11 @@ Vérifier les migrations sur les quatre bases neuves. Redémarrer sans supprimer
 | 6 | Déconnecter le socket B; A envoie/modifie/supprime | Au retour de B, REST rattrape l’état sans attendre un nouveau message |
 | 7 | Redémarrer les services sans supprimer les volumes | Comptes, configuration et historique conservés |
 | 8 | Ouvrir Dashboard sans session, puis avec un compte standard | Connexion demandée; utilisateur non-admin refusé |
-| 9 | Admin liste et supprime un utilisateur, un salon jetable et un message | Suppressions réelles; routes interdites à un compte standard |
-| 10 | Admin crée un compte avec un courriel déjà utilisé | Erreur visible, aucun faux succès, formulaire conservé |
-| 11 | B reçoit un DM avec sa fenêtre hors focus | Notification native ou repli annoncé; clic ouvre la bonne conversation |
-| 12 | Mettre le mode notifications à aucune | Aucune notification système |
+| 9 | A crée un serveur privé, invite B puis le nomme modérateur | B gère les salons de ce serveur mais ni le serveur ni ses modérateurs; un simple membre n’a aucune action de gestion |
+| 10 | Admin liste et supprime un utilisateur, un salon jetable et un message | Suppressions réelles; routes interdites à un compte standard |
+| 11 | Admin crée un compte avec un courriel déjà utilisé | Erreur visible, aucun faux succès, formulaire conservé |
+| 12 | B reçoit un DM avec sa fenêtre hors focus | Notification native ou repli annoncé; clic ouvre la bonne conversation |
+| 13 | Mettre le mode notifications à aucune | Aucune notification système |
 
 Utiliser des comptes et salons jetables pour les suppressions. La suppression du dernier salon et celle du serveur par défaut sont volontairement refusées.
 
