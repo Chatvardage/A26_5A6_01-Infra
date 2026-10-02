@@ -95,26 +95,43 @@ les journaux : une pagination côté AdminJS serait alors nécessaire.
 
 ### Dépendances et audit
 
-La CI du dépôt Dashboard (`.github/workflows/ci.yml`) exécute `npm audit` au seuil `critical`.
-Depuis le 2 octobre, `npm audit --omit=dev` ne signale plus aucune vulnérabilité.
-Les avis venaient de dépendances d’`adminjs` 7.8.17 et
-d’`@adminjs/design-system` 4.1.1, les dernières versions publiées. Le
-`package.json` force désormais leurs versions avec `overrides` : `tinymce` 8,
-`@tiptap/*` 3.31.4, `react-router` 7.18.4, `uuid` 11 et
-`i18next-http-backend` 3. `patch-package` applique
-`patches/@adminjs+design-system+4.1.1.patch` après chaque installation, pour
-adapter l’éditeur riche aux imports de Tiptap 3.
+La CI du dépôt Dashboard (`.github/workflows/ci.yml`) exécute
+`npm audit --audit-level=high` sur toutes les dépendances, dev comprises.
+`npm audit` ne signale aucune vulnérabilité haute ou critique ; il reste des
+avis de sévérité modérée ou faible.
 
-**Limite** : ce correctif change l’arbre `node_modules`, mais pas le code
+Ces avis ([GHSA-cp6q-959q-f8rh](https://github.com/advisories/GHSA-cp6q-959q-f8rh),
+modéré, sur `@tiptap/core`, et [GHSA-vhrc-hgrq-x75r](https://github.com/advisories/GHSA-vhrc-hgrq-x75r),
+faible, sur `@tiptap/extension-link`) viennent de `@tiptap/*` 2.1.13, épinglé par
+`@adminjs/design-system` 4.1.1 (dépendance d’`adminjs` 7.8.17, dernière
+version publiée). Le correctif exige tiptap 3.30.4 ou plus, incompatible avec
+cette version du design system ; `npm audit fix --force` ne propose qu’une
+rétrogradation vers `adminjs` 6.
+
+Le `package.json` force certaines versions avec `overrides` :
+`i18next-http-backend` 3, `uuid` 11 et `react-router`/`react-router-dom`
+7.18.4 sous `adminjs`, `tinymce` 8 sous `@adminjs/design-system`, et
+`minimatch` ^9.0.9 sous `@typescript-eslint/typescript-estree`.
+`typescript-estree` 6.x épingle `minimatch` 9.0.3, vulnérable (sévérité haute) ;
+cet override est temporaire et sera retiré lors du passage à typescript-eslint 8.
+
+Retiré le 2 octobre 2026 (commit `Chatvardage/A26_5A6_01-Dashboard@f352e2a`, « fix audit ») : l’override
+`@tiptap/*` 3.31.4 et le patch `patch-package` qui adaptait
+`@adminjs/design-system` à Tiptap 3. Ils ne changeaient pas le bundle
+précompilé servi au navigateur (voir la limite ci-dessous). `@adminjs/express`
+n’est plus figé : il est en 6.1.1, sans avis connu à ce jour. Sa
+compatibilité avec `adminjs` 7.8.17 est vérifiée par le test
+`src/adminjs-express.spec.ts` du Dashboard (`buildAuthenticatedRouter` exposé
+sur l’import par défaut utilisé par `main.ts`).
+
+**Limite** : ces `overrides` changent l’arbre `node_modules`, mais pas le code
 envoyé au navigateur. AdminJS sert
 `@adminjs/design-system/bundle.production.js`
 (`/frontend/assets/design-system.bundle.js`), un bundle précompilé qui
-embarque ses propres copies : il contient toujours `tinymce` 6.8.2. Le patch
-ne touche que les fichiers `build/`, qui ne sont pas servis. Le risque reste
-faible, car le Dashboard n’utilise pas l’éditeur riche (`richtext`), seulement
-des champs `textarea`. Une vraie correction demande une version d’AdminJS qui
-reconstruit ses bundles. `@adminjs/express` est figé à `5.1.0` : surveiller
-ses avis manuellement.
+embarque ses propres copies : il contient toujours `tinymce` 6.8.2. Le risque
+reste faible, car le Dashboard n’utilise pas l’éditeur riche (`richtext`),
+seulement des champs `textarea`. Une vraie correction demande une version
+d’AdminJS qui reconstruit ses bundles.
 
 ## Configuration
 
