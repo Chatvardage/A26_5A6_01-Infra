@@ -61,15 +61,16 @@ if ! docker compose exec -T postgres sh -c '
 set -eu
 actual=$(psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d postgres -Atc "SELECT datname FROM pg_database ORDER BY datname;")
 for db in "$AUTH_DB" "$ROOMS_DB" "$MESSAGES_DB" "$CONFIG_DB"; do
-  if printf "%s\n" "$actual" | grep -Fxq "$db"; then
-    echo "$db : présente"
-  else
+  if ! printf "%s\n" "$actual" | grep -Fxq "$db"; then
     echo "$db : absente" >&2
     exit 1
   fi
+  # Présente ne suffit pas : connexion réelle à la base.
+  psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$db" -Atc "SELECT 1" >/dev/null
+  echo "$db : présente et accessible"
 done
 '; then
-  echo "Une base configurée est absente ou PostgreSQL a refusé la requête." >&2
+  echo "Une base configurée est absente, inaccessible, ou PostgreSQL a refusé la requête." >&2
   exit 1
 fi
 

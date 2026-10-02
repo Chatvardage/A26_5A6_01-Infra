@@ -1,22 +1,31 @@
-# Architecture C2
+# Architecture
+
+![Diagramme de déploiement et composants](architecture.svg)
+
+## Applications, conteneurs et protocoles
 
 ```mermaid
-flowchart LR
-  FE[Frontend Electron] -->|HTTP + WebSocket| API[Serveur-API / Gateway]
-  DASH[Dashboard / AdminJS] --> API
-  API --> AUTH[Authentification]
-  API --> ROOM[Room-Service]
-  API --> MSG[Message-Service]
-  API --> CFG[User-Config-Service]
-  AUTH --> ADB[(auth_db)]
-  ROOM --> RDB[(rooms_db)]
-  MSG --> MDB[(messages_db)]
-  CFG --> CDB[(config_db)]
-  MSG --> REDIS[(Redis Pub/Sub)]
-  REDIS --> API
-  subgraph Infra
-    PG[(PostgreSQL)]
-    REDIS
+flowchart TB
+  FE[Client Electron : main / preload / renderer] -->|REST + Socket.IO| GW[Conteneur Serveur-API :3000]
+  WEB[Navigateur administrateur] -->|HTTP :3002 / session cookie| DASH[Conteneur Dashboard :3000]
+  DASH -->|REST + JWT admin| AUTH[Conteneur Auth :3001]
+  DASH -->|REST + JWT admin| ROOM[Conteneur Room :3003]
+  DASH -->|REST + JWT admin| MSG[Conteneur Message :3004]
+  GW -->|REST| AUTH
+  GW -->|REST| ROOM
+  GW -->|REST + tunnel Socket.IO| MSG
+  GW -->|REST + identité validée + secret interne| CFG[Conteneur User-Config :3005]
+  ROOM -->|validation JWT| AUTH
+  MSG -->|validation JWT| AUTH
+  MSG -->|droits salon / HTTP interne| ROOM
+  ROOM -->|changements serveur / HTTP interne| MSG
+  AUTH --> ADB[(chatvardage_auth)]
+  ROOM --> RDB[(chatvardage_rooms)]
+  MSG --> MDB[(chatvardage_messages)]
+  CFG --> CDB[(chatvardage_config)]
+  MSG <-->|Pub/Sub| REDIS[Conteneur Redis :6379]
+  ADM[Conteneur Adminer :8080 / hôte :8081] --> PG
+  subgraph PG[Conteneur PostgreSQL :5432]
     ADB
     RDB
     MDB
@@ -24,24 +33,51 @@ flowchart LR
   end
 ```
 
-Le Dashboard est l'application AdminJS du dépôt `A26_5A6_01-Dashboard`; Infra orchestrera son conteneur lorsque l'intégration de tous les repos sera activée (il n'est pas encore dans `docker-compose.yml`). AdminJS n'est pas une responsabilité métier d'Infra.
+Le Gateway ne se connecte jamais à Redis. Le Dashboard appelle directement les services sur le réseau Docker; ses autorisations sont vérifiées par Auth et les services propriétaires. Tous les conteneurs sont sur le réseau `chatvardage`; PostgreSQL et Redis disposent de volumes persistants. Le navigateur et Electron vivent hors des conteneurs.
 
-Le service `adminer` (port hote `8081`) du Compose est distinct : c'est un outil générique d'inspection PostgreSQL réservé au développement, pas le Dashboard.
+## Pourquoi cette architecture
 
-## Choix d'orchestration
+La séparation suit les responsabilités et le travail d’équipe : Auth possède les identités, Room les permissions par serveur, Message les historiques et événements, Config les préférences. NestJS/TypeScript mutualise les conventions DTO/tests de trois services et du Gateway; Rust/Axum isole l’authentification derrière le même contrat HTTP. PostgreSQL assure les données durables; Redis Pub/Sub transporte les événements éphémères; Socket.IO gère la diffusion aux clients. Prisma versionne les migrations, y compris Auth qui utilise SQLx au runtime. Docker Compose assemble un environnement local reproductible.
 
-Décisions prises lors des revues de PR, à relire avant de les remettre en cause.
+Cette séparation exige davantage d’appels et de contrats qu’un monolithe : elle est un choix d’organisation, pas une condition du barème. Le déploiement est mono-instance par service.
 
-- **Adminer sans profil Compose.** Tout ce Compose est un environnement de développement : identifiants de dev, ports liés à `127.0.0.1`. Adminer démarre donc avec `docker compose up`, sans `--profile dev`. Un profil sera à ajouter si ce Compose sert un jour de base à un environnement partagé.
-- **Pas de `NODE_ENV` pour Message-Service, User-Config-Service ni Serveur-API.** Leur code ne lit pas `NODE_ENV` et n'exige pas HTTPS pour `AUTH_SERVICE_URL`. Leur Dockerfile fixe `NODE_ENV=production`, ce qui convient. Seul `room-service` reçoit `NODE_ENV=development`, pour autoriser l'URL HTTP interne d'Auth (voir le README). Ne l'ajouter à un autre service que si son code l'exige.
-- **`TRUST_PROXY=false` est sûr.** Serveur-API compare explicitement la chaîne : `true` ou `false`, toute autre valeur fait échouer le démarrage. La chaîne `"false"` n'est donc jamais évaluée comme vraie.
-- **Aucune valeur n'est interpolée par le shell dans le SQL d'initialisation.** `postgres/init/00-create-databases.sh` passe base, rôle et mot de passe à `psql -v`, dans un heredoc quoté. psql échappe lui-même les valeurs (`:'var'`, `:"var"`). Les noms de base et de rôle sont en plus limités à `[A-Za-z0-9_]`. Remarque : même l'ancien heredoc non quoté n'exécutait pas un `$(...)` contenu dans une variable, car le shell ne réévalue pas le résultat d'une expansion.
-- **Rôle existant : mot de passe réaligné.** Le script d'init ne s'exécute normalement que sur un volume neuf. S'il est rejoué à la main, il fait `ALTER ROLE ... PASSWORD` au lieu d'ignorer le rôle existant, pour rester aligné avec `.env`.
-- **Healthcheck d'Auth avec `curl` et `|| exit 1`.** L'image finale d'Auth-Service est `node:20.19.1-bookworm-slim` (et non Alpine). Une image Node pour un binaire Rust est voulue : le conteneur exécute `npx prisma migrate deploy` avant de lancer le binaire (voir le Dockerfile d'Authentification). Ce Dockerfile installe `curl` explicitement. Le `|| exit 1` n'est pas redondant : Docker n'attend que 0 (sain) ou 1 (malade), alors que `curl` peut renvoyer d'autres codes (par exemple 7 si la connexion est refusée).
-- **`start_period` de 10 s suffisant.** Le build des images a lieu avant le démarrage des conteneurs, il ne compte donc pas. Les échecs pendant `start_period` ne sont pas comptés, puis `retries: 20` × `interval: 5s` laisse encore environ 100 s. Chaque service dispose donc d'environ 110 s pour exécuter ses migrations et répondre.
-- **Secrets visibles dans `docker inspect` : accepté en dev.** Le mot de passe Redis (`--requirepass`) apparaît dans les arguments du conteneur, mais pas dans `ps` : Redis masque sa ligne de commande. `POSTGRES_PASSWORD`, les `DATABASE_URL` et `JWT_SECRET` sont de toute façon visibles dans `docker inspect`, via l'environnement. Déplacer uniquement Redis vers un `redis.conf` n'apporterait rien et créerait une seconde source de vérité hors `.env`. Avant tout environnement partagé, passer tous les services aux secrets Docker.
-- **`scripts/healthcheck.sh` ne lit pas `.env`.** Les identifiants sont lus dans l'environnement des conteneurs (`POSTGRES_USER` pour postgres, `REDISCLI_AUTH` pour redis), que Docker Compose remplit à partir de `.env`. Docker Compose reste ainsi la seule source de vérité, et `.env` n'est jamais exécuté comme un script shell. Sans option, le script vérifie toute la stack ; `--infra` se limite à PostgreSQL et Redis.
-- **Healthchecks Node avec `fetch()` natif.** Room-Service, Message-Service, User-Config-Service et Serveur-API utilisent tous `node:22-alpine`, et `fetch` est disponible sans option depuis Node 18. Si l'un d'eux passait sous Node 18, remplacer son healthcheck par `wget -qO- …`.
-- **Healthcheck Redis : `grep -q PONG` sans `-x`.** `redis-cli ping` répond exactement `PONG`, et une erreur (mauvais mot de passe, serveur arrêté) ne contient pas ce mot. Le cas d'une erreur contenant « PONG » reste théorique ; `-x` n'apporterait rien de concret.
-- **Une seule variable CORS dans `.env`.** Tous les services, Auth-Service compris, lisent `CORS_ORIGINS` ; de même, Room-Service et Message-Service lisent tous deux `AUTH_SERVICE_TIMEOUT_MS`. Aucun renommage dans le Compose : les listes ne peuvent pas diverger. Tous ces services lisent le même format : origines séparées par des virgules, espaces retirés, entrées vides ignorées.
-- **Workflow de revue épinglé.** Dans `.github/workflows/claude-review.yml`, les actions sont épinglées sur un SHA de commit (avec la version en commentaire) et les CLI npm sur une version exacte. Ce workflow a accès aux jetons Claude/Copilot et à l'écriture des PR : un tag ou un paquet republié par un tiers ne doit pas pouvoir s'y exécuter. La procédure de mise à jour est en tête du fichier. Les étapes Claude et Copilot ont `timeout-minutes: 15` : un blocage n'occupe plus un runner pendant 6 h (la limite par défaut de GitHub).
+## Séquence d’un DM
+
+```mermaid
+sequenceDiagram
+  participant A as Electron A
+  participant G as Gateway
+  participant M as Message-Service
+  participant P as PostgreSQL
+  participant R as Redis
+  participant B as Electron B
+  A->>G: POST /api/messages (Bearer)
+  G->>M: Requête inchangée
+  M->>M: Valider identité, destinataire, DTO et quota
+  M->>P: INSERT PrivateMessage
+  P-->>M: Écriture réussie
+  M->>R: PUBLISH private-message.created
+  R-->>M: SUBSCRIBE événement
+  M-->>G: Socket.IO user:expéditeur et user:destinataire
+  G-->>A: Événement
+  G-->>B: Événement
+  B->>G: Après reconnexion : GET historique REST
+  G->>M: Lecture durable
+  M->>P: SELECT historique
+```
+
+Une publication Redis échouée n’annule pas l’écriture PostgreSQL. Redis Pub/Sub ne rejoue pas les événements manqués : le frontend demande explicitement une resynchronisation REST après `connexion.prete`. Les doublons visuels sont fusionnés par identifiant. Les messages de salon sont également persistés et diffusés en temps réel.
+
+## Configuration et rôles
+
+Les configurations sont écrites/lues en REST dans User-Config. Le processus principal Electron applique les préférences et les diffuse aux vues par IPC. Les changements de profil public sont annoncés après enregistrement; les données restent relues par REST.
+
+`admin` est un rôle global. Les rôles propriétaire/modérateur/membre des serveurs sont gérés par Room-Service : il n’existe pas de modérateur global, Authentification ne connaît que `admin` et `utilisateur`. Les routes internes exigent `x-internal-token` et ne sont pas relayées publiquement par le Gateway.
+
+## Limites et exploitation
+
+- Services mono-instance; aucune garantie de reprise durable des événements Redis.
+- Sessions/rate limits et certaines présences conservés en mémoire.
+- Suppressions interservices notifiées avec tentatives bornées; un échec définitif est journalisé.
+- Ce Compose utilise HTTP sur un réseau local et des identifiants de développement. Passer `NODE_ENV=production` seul ne fournit ni TLS ni gestion de secrets : un déploiement de production exige une configuration dédiée.
+- [Bases et migrations](database.md), [client desktop](architecture-frontend.md), [contrats](api/README.md).
