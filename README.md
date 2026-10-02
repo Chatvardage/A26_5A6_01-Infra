@@ -148,6 +148,21 @@ CHATVARDAGE_PROFIL=2 node scripts/start.js
 
 Créer deux comptes distincts dans l’application. Le backend ciblé est `http://localhost:3000`. Sur une installation propre, la connexion est nécessaire; une session valide persistée ouvre ensuite le clavardage sans passage par le panneau de configuration.
 
+## Si node n'est pas installé
+
+```bash
+# Installer nvm
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+
+# Recharger le terminal
+source ~/.bashrc
+
+# Installer Node 20
+nvm install 20
+nvm use 20
+nvm alias default 20
+```
+
 ## Créer le premier administrateur
 
 Créer d’abord un compte standard dans Electron, puis depuis Infra promouvoir **ce compte uniquement**. Remplacer le pseudo ci-dessous par celui choisi :
