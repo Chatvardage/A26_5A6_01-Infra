@@ -1,6 +1,6 @@
 # Chatvardage — Rooms Service
 
-Microservice des **serveurs et salons** de Chatvardage (Contrôle 2 — Backend conteneurisé et services temps réel, cours 420-5A6-ST), sur le modèle de Discord : un **serveur** regroupe des membres et des **salons**. Les messages eux-mêmes appartiennent à Message-Service.
+Microservice des **serveurs et salons** de Chatvardage , sur le modèle de Discord : un **serveur** regroupe des membres et des **salons**. Les messages eux-mêmes appartiennent à Message-Service.
 
 ## Technologies
 
@@ -376,7 +376,7 @@ Les messages des salons sont stockés et diffusés par Message-Service, qui vér
 
 Ce service et Message-Service partagent `INTERNAL_SERVICE_TOKEN` (route interne d'accès aux salons, événements temps réel).
 
-## Place du service dans l'architecture du Contrôle 2
+## Place du service dans l'architecture
 
 Le projet d'équipe est séparé en responsabilités :
 
@@ -400,7 +400,7 @@ Le **Room-Service ne gère volontairement ni Redis, ni WebSocket, ni les message
 
 Le Dashboard d'administration utilise `GET /api/admin/servers` (par pages) et les routes des serveurs et salons (un admin y a tous les droits).
 
-## Vérifications avant remise
+## Vérifications avant publication
 
 À partir d'un clone propre du dépôt :
 
@@ -421,4 +421,4 @@ npm run test:cov   # 100 % exigé
 npm run lint
 ```
 
-Le `docker-compose.yml` global du dépôt `Infra` demeure le point de démarrage de l'environnement complet de l'équipe pour la démonstration du Contrôle 2.
+Le `docker-compose.yml` global du dépôt `Infra` demeure le point de démarrage de l'environnement complet de l'équipe pour la validation.

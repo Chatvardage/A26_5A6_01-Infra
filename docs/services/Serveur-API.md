@@ -1,4 +1,4 @@
-# A26_5A6_01-Serveur-API — Chatvardage C2
+# A26_5A6_01-Serveur-API — Chatvardage
 
 API Gateway HTTP/WebSocket de Chatvardage. Le Frontend Electron parle à ce dépôt sur le port `3000`; le Gateway relaie ensuite vers Auth-Service, Room-Service, Message-Service et User-Config-Service.
 
@@ -139,7 +139,7 @@ La limite est appliquée **par IP et par route** à :
 - `POST /api/auth/register`
 - `PATCH /api/auth/me` et `DELETE /api/auth/me` (même compteur) : elles vérifient le mot de passe actuel, qu'un jeton volé ne doit pas permettre de deviner par essais successifs
 
-Une requête refusée reçoit `429` et `Retry-After`. Le store est en mémoire et les buckets expirés sont purgés périodiquement pour éviter une croissance permanente avec des IP one-shot. Cette approche reste adaptée au Compose C2 à une instance. Si plusieurs instances du Gateway sont déployées plus tard, ce compteur devra être partagé (par exemple Redis).
+Une requête refusée reçoit `429` et `Retry-After`. Le store est en mémoire et les buckets expirés sont purgés périodiquement pour éviter une croissance permanente avec des IP one-shot. Cette approche reste adaptée au Compose local à une instance. Si plusieurs instances du Gateway sont déployées plus tard, ce compteur devra être partagé (par exemple Redis).
 
 ## CORS
 

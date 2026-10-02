@@ -481,8 +481,7 @@ admin, `404` si l'id n'existe pas.
   validation cryptographique, le middleware relit l'utilisateur en base :
   une suppression, un changement de rôle ou un changement de mot de passe
   est appliqué immédiatement.
-- `identifiant` de connexion accepte courriel OU pseudo, comme demandé dans
-  l'énoncé.
+- `identifiant` de connexion accepte courriel ou pseudo.
 - Le courriel est normalisé en minuscules avant d'être stocké
   (`Alice@Example.com` et `alice@example.com` désignent le même compte,
   et la connexion fonctionne quelle que soit la casse tapée) — c'est

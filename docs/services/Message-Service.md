@@ -1,6 +1,6 @@
 # A26_5A6_01-Message-Service
 
-Microservice des messages de Chatvardage — Contrôle 2. Gère à la fois les
+Microservice des messages de Chatvardage. Gère à la fois les
 messages privés (DM) entre deux utilisateurs et les messages de salon
 (channels), en réutilisant exactement la même architecture pour les deux.
 

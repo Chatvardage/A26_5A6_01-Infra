@@ -1,6 +1,6 @@
-# Rapport de validation du contrôle 2
+# Rapport de validation
 
-Validation locale du 1er octobre 2026, sur les branches `docs/controle-2` créées depuis `develop`. Mobile est exclu. Les résultats ci-dessous distinguent les vérifications exécutées des éléments restant à démontrer.
+Validation locale du 1er octobre 2026, depuis les révisions de développement. Les résultats ci-dessous distinguent les vérifications exécutées des éléments restant à démontrer.
 
 ## Vérifications automatisées
 
@@ -32,11 +32,10 @@ Une stack Docker isolée a été construite depuis les sources avec des volumes 
 - L’action réelle AdminJS de création renvoie une erreur pour un courriel déjà utilisé, sans redirection de réussite. Une création valide réussit.
 - Suppression d’un utilisateur, d’un salon et d’un message par les actions du Dashboard vérifiée auprès des API; refus des opérations non autorisées vérifié.
 
-## Avant la remise
+## Portée et vérifications complémentaires
 
-1. Compléter les membres officiels, les assignations, les dates et le plan de communication dans [la planification](planification.md). Ces informations ne peuvent pas être déduites des tests.
-2. Exécuter [la démonstration manuelle](validation-c2.md) avec deux fenêtres Electron et vérifier les notifications natives hors focus sur les systèmes visés. Les clients réseau automatisés ne remplacent pas cette démonstration visuelle.
-3. Valider les installateurs desktop sur les plateformes de remise. Les builds locaux réussis ne prouvent pas leur installation sur chaque système.
-4. Après revue et fusion, publier les branches et les tags cohérents, puis compléter [le manifeste](remise-c2.md). Les validations décrites ici sont locales; elles ne constituent pas une exécution GitHub Actions.
+- Vérifier les notifications natives hors focus avec deux fenêtres Electron sur chaque système cible. Les clients réseau automatisés ne remplacent pas cette observation.
+- Valider les installateurs desktop sur les plateformes supportées. Une compilation locale réussie ne prouve pas leur installation sur chaque système.
+- Vérifier les exécutions GitHub Actions après publication des commits et des tags. Les résultats décrits ici proviennent de validations locales.
 
-Le projet dispose des parcours techniques vérifiés pour C2. La planification et les preuves de remise ci-dessus restent nécessaires avant de déclarer la remise complète.
+Le [scénario fonctionnel](validation.md) décrit les manipulations reproductibles; le [guide des versions](versions.md) décrit les règles de publication. Ce rapport consigne un état daté et ne garantit pas les révisions ultérieures.

@@ -42,8 +42,7 @@ Fournit une API REST pour :
 - la gestion des comptes et des rôles (`admin`, `moderateur`,
   `utilisateur`) pour le panneau d'administration de l'équipe.
 
-La persistance des comptes se fait dans PostgreSQL (source de vérité, comme
-exigé par l'énoncé). Ce service n'a pas besoin de Redis : Redis sert au
+La persistance des comptes se fait dans PostgreSQL, source de vérité. Ce service n'a pas besoin de Redis : Redis sert au
 service de messagerie temps réel pour diffuser les événements, pas à
 l'authentification elle-même.
 
@@ -62,7 +61,7 @@ et [Installation et lancement](#installation-et-lancement)).
 
 | Choix | Pourquoi |
 |-------|----------|
-| **Rust** | Imposé par la répartition des tâches de l'équipe (voir énoncé : "vous êtes libres de choisir les technologies"). |
+| **Rust** | Langage du service, avec typage statique et gestion explicite des erreurs. |
 | **Axum** | Framework web asynchrone, API simple, bonne documentation, très utilisé pour des services HTTP en Rust — un bon choix pour un premier projet Rust. |
 | **PostgreSQL + SQLx** | Base relationnelle robuste pour des données structurées (comptes, rôles). SQLx est asynchrone (compatible avec Axum/Tokio) et n'exige pas d'ORM lourd. |
 | **Prisma (migrations uniquement)** | Standardise la gestion des migrations de schéma avec le reste de l'équipe (le Room-Service l'utilise aussi) — la CLI Prisma est indépendante du langage du service qui l'utilise. Aucun client Prisma généré n'est utilisé au runtime : SQLx reste le seul point d'accès aux données depuis le code Rust. |
@@ -259,7 +258,7 @@ migration Prisma en local, il faut en plus :
 
 ## Installation et lancement
 
-### Avec Docker (méthode utilisée pour la remise)
+### Avec Docker (démarrage conteneurisé)
 
 ```bash
 git clone https://github.com/Chatvardage/A26_5A6_01-Authentification.git
@@ -350,7 +349,7 @@ Résumé :
 | Variable | Rôle |
 |----------|------|
 | `DATABASE_URL` | Chaîne de connexion PostgreSQL — **toujours requise**, aucune valeur par défaut (lue à la fois par Prisma pour les migrations et par SQLx au runtime). Format : `postgresql://<user>:<mot_de_passe>@<hôte>:5432/<base>`. Ex. local : `postgres://chatvardage:chatvardage@localhost:5432/chatvardage_auth` ; dans le réseau Docker d'`infra` : `postgresql://auth_service:auth_service_dev@postgres:5432/chatvardage_auth`. Le suffixe `?schema=public` (convention Prisma) est **volontairement omis** : testé et accepté par SQLx, qui l'ignore avec un simple avertissement (`ignoring unrecognized connect parameter`) plutôt qu'une erreur — inutile de toute façon puisque `public` est déjà le schéma par défaut de PostgreSQL. |
-| `JWT_SECRET` | Secret de signature des JWT — **toujours requis, au moins 32 caractères (256 bits)** (le service refuse de démarrer sinon, y compris si la variable existe mais est vide — voir `config.rs`). Générer avec `openssl rand -hex 32` (64 caractères). **À changer avant la remise finale**, ne jamais committer un vrai secret. |
+| `JWT_SECRET` | Secret de signature des JWT — **toujours requis, au moins 32 caractères (256 bits)** (le service refuse de démarrer sinon, y compris si la variable existe mais est vide — voir `config.rs`). Générer avec `openssl rand -hex 32` (64 caractères). **Utiliser un secret propre à chaque environnement**, ne jamais committer un vrai secret. |
 | `JWT_DUREE_DE_VIE_HEURES` | Durée de validité d'un jeton en heures (défaut : 24h, doit être comprise entre 1 et 720 — 30 jours). Le rôle et l'existence de l'utilisateur sont revérifiés en base à chaque route protégée, donc une durée élevée ne conserve pas les droits d'un compte supprimé ou rétrogradé. |
 | `PORT` | Port HTTP du service et du mapping du Compose autonome (défaut : `3001`). Avec `PORT=3099`, l'API est exposée sur `http://localhost:3099` et son healthcheck interroge ce même port. |
 | `RUST_LOG` | Niveau de journalisation (`tracing-subscriber`) — `error`/`warn`/`info`/`debug`/`trace` (défaut : `info`) |
@@ -528,7 +527,7 @@ voir [Endpoints de l'API](#endpoints-de-lapi) — sans repasser par SQL.
   consciemment ici plutôt que corrigé, faute d'un flux de vérification par
   courriel qui serait hors de la portée de ce contrôle.
 
-### Vérifications à exécuter avant une remise
+### Vérifications avant publication
 
 - `cargo build`, `cargo build --release`, `cargo fmt --check`,
   `cargo clippy --all-targets --all-features -- -D warnings` et

@@ -1,10 +1,10 @@
-# Chatvardage — Infrastructure et documentation du contrôle 2
+# Chatvardage — Infrastructure et documentation
 
 Point de départ du projet complet : client Electron, API Gateway, quatre services métier, Dashboard d’administration, PostgreSQL et Redis. Ce dépôt orchestre les conteneurs et rassemble la documentation. Chaque service conserve son code, ses tests et ses migrations.
 
 ## Prérequis
 
-- Git et accès aux huit dépôts privés de l’organisation **Chatvardage** (le correcteur doit aussi y avoir accès).
+- Git et accès aux huit dépôts privés de l’organisation **Chatvardage**.
 - Docker Engine 25+ / Docker Desktop avec Compose v2; Docker démarré.
 - Bash sous Linux/macOS ou WSL sous Windows pour les scripts. Les commandes ci-dessous sont en Bash/WSL.
 - Pour le client desktop depuis les sources : Node.js 22, npm et un bureau graphique. Le backend n’exige ni Rust, ni Node, ni PostgreSQL installés sur l’hôte.
@@ -12,7 +12,7 @@ Point de départ du projet complet : client Electron, API Gateway, quatre servic
 
 ## Installation complète
 
-Cloner les dépôts côte à côte. Mobile est prévu pour le contrôle 3 et n’est pas requis ici.
+Cloner les huit dépôts ci-dessous côte à côte.
 
 ```bash
 mkdir Chatvardage
@@ -27,7 +27,7 @@ openssl rand -hex 32
 
 Copier la valeur générée dans `DASHBOARD_SESSION_SECRET` de `.env`, puis enregistrer. Aucun secret réel ne doit être commité. Ces valeurs sont pour un poste local de développement; ce Compose n’est pas un déploiement de production.
 
-Pour reproduire la remise, utiliser les tags/commits validés du [manifeste](docs/remise-c2.md) plutôt que des branches mouvantes.
+Pour reproduire une version, utiliser les tags ou commits validés indiqués dans le [guide des versions](docs/versions.md).
 
 ```text
 Chatvardage/
@@ -51,10 +51,9 @@ docker compose ps
 
 `docker compose up --build` fonctionne aussi au premier plan. Au premier démarrage, PostgreSQL crée quatre bases et leurs propriétaires; les services appliquent automatiquement leurs migrations avant de devenir sains.
 
-Le healthcheck vérifie réellement : PostgreSQL, connexion aux **quatre bases configurées**, Redis (`PONG`), les états `healthy` d’Auth, Room, Message, User-Config, Gateway **et Dashboard**, puis `GET /api/health/upstreams`. Il termine avec un code non nul en cas d’échec. Adminer est un outil de développement facultatif pour la démonstration, pas un service métier. La santé ne prouve pas à elle seule les fonctionnalités : suivre ensuite le [scénario C2](docs/validation-c2.md).
+Le healthcheck vérifie réellement : PostgreSQL, connexion aux **quatre bases configurées**, Redis (`PONG`), les états `healthy` d’Auth, Room, Message, User-Config, Gateway **et Dashboard**, puis `GET /api/health/upstreams`. Il termine avec un code non nul en cas d’échec. Adminer est un outil de développement facultatif pour la validation, pas un service métier. La santé ne prouve pas à elle seule les fonctionnalités : suivre ensuite le [scénario de validation](docs/validation.md).
 
-```bash
-./scripts/healthcheck.sh --infra       # PostgreSQL, quatre bases et Redis seulement
+```bash./scripts/healthcheck.sh --infra       # PostgreSQL, quatre bases et Redis seulement
 ./scripts/verifier-fichiers-partages.sh
 ```
 
@@ -117,20 +116,19 @@ docker compose logs --tail=100 auth-service room-service message-service user-co
 - API saine mais connexion impossible : examiner Auth et les migrations; un healthcheck ne crée pas de compte.
 - JWT expiré/révoqué : se reconnecter; les droits des services peuvent être mémorisés 10 s.
 - Redis indisponible : un message peut déjà être écrit en base avant l’échec de publication. Relire l’historique avant de réessayer pour éviter un doublon; il n’y a pas de transaction distribuée ni de file de reprise durable.
-- Notifications sous WSL : l’affichage natif dépend de D-Bus/du bureau. L’application possède un repli visuel; vérifier les notifications sur l’OS de démonstration.
+- Notifications sous WSL : l’affichage natif dépend de D-Bus/du bureau. L’application possède un repli visuel; vérifier les notifications sur l’OS cible.
 
-`docker compose down` conserve les volumes. **`./scripts/reset.sh` et `docker compose down -v` effacent les données** : réserver ces commandes à un environnement jetable. Pour une validation propre, utiliser le protocole isolé de `docs/validation-c2.md`.
+`docker compose down` conserve les volumes. **`./scripts/reset.sh` et `docker compose down -v` effacent les données** : réserver ces commandes à un environnement jetable. Pour une validation propre, utiliser le protocole isolé de `docs/validation.md`.
 
 ## Documentation centrale
 
-- [Architecture applications et conteneurs](docs/architecture.md), [image SVG](docs/architecture.png)
+- [Architecture applications et conteneurs](docs/architecture.md), [image PNG](docs/architecture.png) et [source SVG](docs/architecture.svg)
 - [Architecture interne du frontend](docs/architecture-frontend.md)
 - [Bases, propriétaires et migrations](docs/database.md)
 - [Contrats HTTP, rôles et événements](docs/api/README.md)
 - [Guides détaillés par dépôt](docs/services/README.md)
-- [Validation, démonstration et résultats](docs/validation-c2.md)
-- [Livrables, versions et suivi des remarques C1](docs/remise-c2.md)
-- [Planification et communication](docs/planification.md)
+- [Validation, démonstration et résultats](docs/validation.md)
+- [Versions et publication](docs/versions.md)
 - [Synchronisation facultative des clones](scripts/info-upll-clone.md)
 
 ## CI Infra

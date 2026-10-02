@@ -36,7 +36,7 @@ Pour une suppression, l'événement contient encore `senderId` et `recipientId`,
 
 La suppression d'un compte (`DELETE /api/internal/users/:userId`, appelée par Authentification) efface ses conversations **sans événement temps réel** (voir [temps réel salons](../api/temps-reel-salons.md), « Effacements en masse »).
 
-## Authentification C2
+## Authentification
 
 Les connexions REST utilisent `Authorization: Bearer <JWT>` et Socket.IO utilise `auth.token`. Le `userId` est dérivé du claim signé `sub`; il n'est jamais accepté directement depuis le client.
 

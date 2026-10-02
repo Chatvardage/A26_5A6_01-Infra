@@ -1,6 +1,6 @@
 # Chatvardage — User Config Service
 
-Microservice de configuration utilisateur pour le **Contrôle 2 — Backend conteneurisé et services temps réel** du cours 420-5A6-ST.
+Microservice de configuration utilisateur.
 
 Ce dépôt contient uniquement le service responsable des préférences personnelles de chaque utilisateur : alias, thème, langue, statut de présence et mode de notification. L'authentification, les salons et les messages ne sont pas gérés par ce service.
 
@@ -227,7 +227,7 @@ Dans Docker ou en déploiement :
 npx prisma migrate deploy
 ```
 
-Cette commande est lancée directement dans le `CMD` du conteneur (voir `Dockerfile`), avant de démarrer le serveur. C'est adapté à un déploiement **mono-replica** comme celui du Contrôle 2 ; en multi-replica, plusieurs instances démarrant simultanément pourraient tenter d'appliquer les mêmes migrations en parallèle. Voir `AGENTS.md` (« Décisions de conception à préserver ») pour le détail de ce choix et les conditions dans lesquelles le revoir.
+Cette commande est lancée directement dans le `CMD` du conteneur (voir `Dockerfile`), avant de démarrer le serveur. C'est adapté à un déploiement **mono-replica**, comme la stack locale ; en multi-replica, plusieurs instances démarrant simultanément pourraient tenter d'appliquer les mêmes migrations en parallèle. Voir `AGENTS.md` (« Décisions de conception à préserver ») pour le détail de ce choix et les conditions dans lesquelles le revoir.
 
 ## Healthcheck
 
@@ -255,7 +255,7 @@ Ce service est la source de vérité des préférences du client Electron. Le pr
 - la présence (`PUT /api/config-utilisateur/presence`, renvoyé toutes les 20 s comme signe de vie);
 - le mode de notification (`systeme` | `discret` | `aucune`).
 
-## Place du service dans l'architecture du Contrôle 2
+## Place du service dans l'architecture
 
 Le projet d'équipe est séparé en responsabilités :
 
@@ -277,7 +277,7 @@ Infra --> Docker Compose + PostgreSQL + Redis + configuration globale
 
 Le **User-Config-Service ne gère volontairement ni l'authentification, ni les salons, ni les messages, ni le temps réel**. Il reste un service de préférences interrogé en REST classique.
 
-## Vérifications avant remise
+## Vérifications avant publication
 
 À partir d'un clone propre du dépôt :
 
@@ -298,4 +298,4 @@ npm run test:cov
 npm run lint
 ```
 
-Le `docker-compose.yml` global du dépôt `Infra` demeure le point de démarrage de l'environnement complet de l'équipe pour la démonstration du Contrôle 2.
+Le `docker-compose.yml` global du dépôt `Infra` demeure le point de démarrage de l'environnement complet de l'équipe pour la validation.

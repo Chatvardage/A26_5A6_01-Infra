@@ -1,4 +1,4 @@
-# Architecture du contrôle 2
+# Architecture
 
 ![Diagramme de déploiement et composants](architecture.svg)
 
@@ -66,7 +66,7 @@ sequenceDiagram
   M->>P: SELECT historique
 ```
 
-Une publication Redis échouée n’annule pas l’écriture PostgreSQL. Redis Pub/Sub ne rejoue pas les événements manqués : le frontend demande explicitement une resynchronisation REST après `connexion.prete`. Les doublons visuels sont fusionnés par identifiant. Les messages de salon sont également réels, mais dépassent le minimum obligatoire du C2.
+Une publication Redis échouée n’annule pas l’écriture PostgreSQL. Redis Pub/Sub ne rejoue pas les événements manqués : le frontend demande explicitement une resynchronisation REST après `connexion.prete`. Les doublons visuels sont fusionnés par identifiant. Les messages de salon sont également persistés et diffusés en temps réel.
 
 ## Configuration et rôles
 

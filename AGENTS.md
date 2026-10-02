@@ -1,7 +1,7 @@
 # AGENTS.md — A26_5A6_01-Infra
 
 ## Mission
-Orchestrer l'environnement du Contrôle 2 Chatvardage. Ce dépôt ne contient aucune logique métier et **ne possède aucun schéma métier**.
+Orchestrer l'environnement Chatvardage. Ce dépôt ne contient aucune logique métier et **ne possède aucun schéma métier**.
 
 ## Responsabilités d'Infra
 - lancer PostgreSQL et Redis;
@@ -20,7 +20,7 @@ Ne jamais créer dans `postgres/init` les tables métier, index métier ou donn�
 `postgres/init/00-create-databases.sh` peut créer les **bases, rôles et propriétaires**, rien de plus.
 
 ## Redis
-Redis sert au transport/temps réel et ne remplace jamais PostgreSQL. Pour le C2, le temps réel obligatoire concerne les messages privés. Ne pas ajouter la persistance des messages de salons dans Infra.
+Redis sert au transport/temps réel et ne remplace jamais PostgreSQL. Le temps réel des messages appartient au service de messagerie. Ne pas ajouter la persistance des messages de salons dans Infra.
 
 ## Validation obligatoire avant PR
 Exécuter :
@@ -96,6 +96,6 @@ Le job `compose-et-scripts` génère maintenant un secret temporaire avec `opens
 - La génération manuelle de `DASHBOARD_SESSION_SECRET` reste un choix explicite du démarrage Infra. Le README la place avant `docker compose up` et `.env.example` décrit l’obligation. Aucun message externe à l’équipe n’est envoyé automatiquement.
 - Les décisions et résultats restent dans `AGENTS.md`, conformément à la demande de cette revue. Le déplacement vers un journal séparé pourra être envisagé si les entrées s’accumulent; il n’est pas nécessaire pour cette correction.
 
-## Documentation centrale du contrôle 2
+## Documentation centrale
 
-Infra est la référence du démarrage complet, des architectures, contrats et scénarios de remise. Le README local décrit le dépôt et ses commandes; les guides détaillés sont dans `A26_5A6_01-Infra/docs/`. Toute modification de contrat doit mettre à jour la référence centrale et ses liens. Mobile relève du contrôle 3.
+Infra est la référence du démarrage complet, des architectures, contrats et scénarios de validation. Le README local décrit le dépôt et ses commandes; les guides détaillés sont dans `A26_5A6_01-Infra/docs/`. Toute modification de contrat doit mettre à jour la référence centrale et ses liens.

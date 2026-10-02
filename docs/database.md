@@ -1,4 +1,4 @@
-# Bases de données — Contrôle 2
+# Bases de données
 
 ## Principe
 Infra lance une seule instance PostgreSQL et crée quatre bases logiques avec un propriétaire distinct. **Les bases sont vides après l'initialisation d'Infra.** Chaque microservice applique ensuite ses propres migrations.

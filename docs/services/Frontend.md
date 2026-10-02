@@ -1,4 +1,4 @@
-# ChatVardage (420-5A6-ST, A26)
+# Chatvardage — Client desktop
 
 Application de clavardage desktop réalisée avec Electron, connectée à
 l'infrastructure ChatVardage réelle (Gateway + microservices — voir
@@ -183,7 +183,7 @@ Artifacts attendus :
 - macOS : DMG.
 - Linux : AppImage.
 
-## 7. Scénarios de test pour la démonstration
+## 7. Scénarios de test pour la validation
 
 ### Authentification, pseudo et messages
 
