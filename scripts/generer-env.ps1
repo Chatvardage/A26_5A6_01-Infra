@@ -48,10 +48,22 @@ foreach ($name in $secretNames) {
 }
 
 $content = [System.IO.File]::ReadAllText($Template)
+# Normaliser les fins de ligne avant remplacement pour produire un fichier cohérent.
+$content = $content -replace "`r`n", "`n" -replace "`r", "`n"
 foreach ($name in $secretNames) {
     $escaped = [regex]::Escape($name)
     $replacement = "$name=$($values[$name])"
+    if ($content -notmatch "(?m)^$escaped=.*$") {
+        throw "Clé manquante dans le template : $name"
+    }
     $content = [regex]::Replace($content, "(?m)^$escaped=.*$", $replacement)
+}
+
+foreach ($name in $secretNames) {
+    $escaped = [regex]::Escape($name)
+    if ($content -notmatch "(?m)^$escaped=.+$") {
+        throw "Secret non généré correctement : $name"
+    }
 }
 
 # UTF-8 sans BOM pour éviter qu'un BOM soit interprété dans le premier nom de variable.

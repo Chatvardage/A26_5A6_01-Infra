@@ -108,6 +108,8 @@ Le Dashboard exige aussi deux secrets distincts de 32 caracteres minimum : `DASH
 
 ## Connexions
 
+> ⚠️ **Sécurité :** les identifiants et secrets de `.env.example` sont réservés au développement local. Ne les réutilisez jamais dans un environnement partagé ou de production. Le fichier `.env` généré est local, sensible et ne doit jamais être committé.
+
 Les mots de passe sont générés dans `.env`; les exemples de `.env.example` ne doivent pas être considérés comme les identifiants de la stack après exécution de `generer-env`. Docker Compose injecte automatiquement les bonnes valeurs dans les services.
 
 Depuis les conteneurs, les services utilisent les noms Docker `postgres` et `redis`. Depuis la machine hôte, les ports de développement sont publiés uniquement sur `127.0.0.1`.
