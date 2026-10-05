@@ -350,7 +350,7 @@ Résumé :
 |----------|------|
 | `DATABASE_URL` | Chaîne de connexion PostgreSQL — **toujours requise**, aucune valeur par défaut (lue à la fois par Prisma pour les migrations et par SQLx au runtime). Format : `postgresql://<user>:<mot_de_passe>@<hôte>:5432/<base>`. Ex. local : `postgres://chatvardage:chatvardage@localhost:5432/chatvardage_auth` ; dans le réseau Docker d'`infra` : `postgresql://auth_service:auth_service_dev@postgres:5432/chatvardage_auth`. Le suffixe `?schema=public` (convention Prisma) est **volontairement omis** : testé et accepté par SQLx, qui l'ignore avec un simple avertissement (`ignoring unrecognized connect parameter`) plutôt qu'une erreur — inutile de toute façon puisque `public` est déjà le schéma par défaut de PostgreSQL. |
 | `JWT_SECRET` | Secret de signature des JWT — **toujours requis, au moins 32 caractères (256 bits)** (le service refuse de démarrer sinon, y compris si la variable existe mais est vide — voir `config.rs`). Générer avec `openssl rand -hex 32` (64 caractères). **Utiliser un secret propre à chaque environnement**, ne jamais committer un vrai secret. |
-| `JWT_DUREE_DE_VIE_HEURES` | Durée de validité d'un jeton en heures (défaut : 24h, doit être comprise entre 1 et 720 — 30 jours). Le rôle et l'existence de l'utilisateur sont revérifiés en base à chaque route protégée, donc une durée élevée ne conserve pas les droits d'un compte supprimé ou rétrogradé. |
+| `JWT_DUREE_DE_VIE_HEURES` | Configuration historique (1 à 720 heures) conservée pour les JWT sans famille; les nouvelles sessions login/register/refresh émettent un accès de 15 minutes. Les JWT historiques déjà émis restent acceptés jusqu'à expiration/révocation. |
 | `PORT` | Port HTTP du service et du mapping du Compose autonome (défaut : `3001`). Avec `PORT=3099`, l'API est exposée sur `http://localhost:3099` et son healthcheck interroge ce même port. |
 | `RUST_LOG` | Niveau de journalisation (`tracing-subscriber`) — `error`/`warn`/`info`/`debug`/`trace` (défaut : `info`) |
 | `SERVICES_COMPTE_SUPPRIME_URLS` | URL de base des services à prévenir d'une suppression de compte, séparées par des virgules (ex. `http://room-service:3003,http://message-service:3004,http://user-config-service:3005`). Absente : aucun service prévenu (avertissement journalisé à chaque suppression). |
@@ -499,9 +499,7 @@ voir [Endpoints de l'API](#endpoints-de-lapi) — sans repasser par SQL.
 
 ## Limites connues et pistes d'amélioration
 
-- Pas de renouvellement de jeton (refresh token) : un jeton expiré oblige
-  à se reconnecter. Acceptable pour la portée du contrôle (24h de durée de
-  vie par défaut).
+- Renouvellement réel par `/api/auth/refresh` : rotation atomique PostgreSQL, famille de 30 jours, JWT de 15 minutes. `/api/auth/logout` révoque une famille. Voir [le contrat](../api/authentification.md#sessions-renouvelables--register-login-refresh-et-logout).
 - La limitation de débit de `/api/auth/login` et `/api/auth/register`
   relève du `Serveur-API` : le Gateway, point d'entrée unique, doit
   limiter ces routes publiques avant qu'elles ne déclenchent un hachage
