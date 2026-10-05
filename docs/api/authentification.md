@@ -479,7 +479,7 @@ admin, `404` si l'id n'existe pas.
 - Chaque requête protégée présente un JWT signé (HMAC) contenant `sub`
   (id utilisateur — nom imposé par la norme JWT, non traduit),
   `version_auth` et `exp` (expiration — aussi imposé par la norme
-  JWT, 24h par défaut, configurable via `JWT_DUREE_DE_VIE_HEURES`). Après
+  JWT, 15 minutes pour les nouvelles sessions; anciens JWT sans `sid` selon leur configuration initiale). Après
   validation cryptographique, le middleware relit l'utilisateur en base :
   une suppression, un changement de rôle ou un changement de mot de passe
   est appliqué immédiatement.
@@ -498,3 +498,40 @@ admin, `404` si l'id n'existe pas.
 - Toutes les routes ci-dessus sont codées et testées (voir le
   [guide du service](../services/Authentification.md#lancer-les-tests)) — y compris `PATCH`/`DELETE /api/auth/me`
   et `GET`/`PATCH /api/users/{id}`.
+
+## Sessions renouvelables : register, login, refresh et logout
+
+Les réponses register/login gardent `jeton` et `utilisateur` et ajoutent `refresh_token`
+(64 caractères hexadécimaux opaques). Les anciens clients peuvent ignorer ce champ.
+Les nouveaux JWT d'accès durent 15 minutes, avec `sid` (famille) et `jti` (identifiant
+unique), en plus de `sub`, `version_auth` et `exp`. Les JWT déjà émis sans `sid`
+restent valides jusqu'à leur expiration ou révocation globale.
+
+**POST /api/auth/refresh**, sans Bearer : corps `{ "refresh_token": "<valeur opaque>" }`.
+Réponse 200 : même forme que login, avec un nouveau JWT et refresh token.
+La transaction PostgreSQL verrouille l'utilisateur, consomme l'ancien hash une
+seule fois et insère son successeur. Les changements de mot de passe, logout-all,
+suppressions et logout empêchent le renouvellement. Erreurs : 400 (JSON/format
+invalide), 401 (inconnu, consommé, expiré, révoqué ou version modifiée), 500 (stockage).
+
+La famille expire **30 jours depuis la connexion initiale**; les rotations ne
+repoussent pas cette échéance. Seuls les hashes SHA-256 des refresh tokens sont
+stockés dans `sessions_refresh`. Aucun mot de passe n'est utilisé pour refresh.
+
+**POST /api/auth/logout**, sans Bearer : même corps; 204 idempotent.
+Révoque toute la famille correspondant au hash, même si le token a déjà été
+consommé. Un logout concurrent à refresh révoque aussi son successeur. Les JWT
+portant ce `sid` sont refusés par `/me` et les routes protégées. Les caches Auth des
+services existants conservent leur délai habituel de propagation. `logout-all`
+reste une révocation de tous les appareils par `version_auth`.
+
+Les deux nouvelles routes passent par Serveur-API et son quota par IP et route.
+Le Mobile stocke les tokens dans SecureStore, valide `/me` au démarrage, renouvelle
+après 401 et retente chaque requête au maximum une fois. Une promise partagée
+assure un seul refresh concurrent. Un échec de restauration/refresh efface l'état
+local et affiche Login. Une panne réseau de logout n'empêche pas ce nettoyage.
+
+Les lignes consommées restent jusqu'à l'expiration de leur famille pour permettre
+logout après une rotation concurrente. L'exploitation peut programmer une purge
+`DELETE FROM sessions_refresh WHERE expire_le < now()`; le service n'exécute pas
+automatiquement cette purge.

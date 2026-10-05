@@ -8,6 +8,8 @@ Le Serveur-API conserve les contrats des microservices. Il ne renomme pas les ch
 |---|---|---|
 | POST | `/api/auth/register` | publique, rate-limit Gateway |
 | POST | `/api/auth/login` | publique, rate-limit Gateway |
+| POST | `/api/auth/refresh` | token opaque dans le corps JSON, rate-limit Gateway |
+| POST | `/api/auth/logout` | révocation de famille, token dans le corps JSON, rate-limit Gateway |
 | GET | `/api/auth/me` | Bearer JWT |
 | PATCH | `/api/auth/me` | Bearer JWT, rate-limit Gateway |
 | DELETE | `/api/auth/me` | Bearer JWT, rate-limit Gateway |
@@ -149,7 +151,7 @@ Retourne `200` si tous répondent avec un statut HTTP 2xx, sinon `503` et `statu
 ## Erreurs produites par le Gateway
 
 - `413 Payload Too Large` : corps au-dessus de `MAX_PROXY_BODY_BYTES`.
-- `429 Too Many Requests` : limite de login/register atteinte.
+- `429 Too Many Requests` : quota Auth par IP et route atteint (login/register/refresh/logout ou modification/suppression du profil).
 - `502 Bad Gateway` : réponse Auth 2xx dont le contrat d'identité est invalide lors d'un accès User-Config (`id` absent, vide, de plus de 255 caractères ou contenant un caractère de contrôle comme CR/LF).
 - `503 Service Unavailable` : service interne injoignable.
 - `504 Gateway Timeout` : délai `PROXY_TIMEOUT_MS` dépassé.
