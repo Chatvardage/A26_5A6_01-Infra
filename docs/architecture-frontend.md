@@ -243,7 +243,10 @@ de mes appareils, il fait relire les compteurs de non-lus.
 `messages:rechercher` → `GET /api/messages/search?conversationId=…`). La
 recherche porte uniquement sur la conversation affichée : le salon actif, ou
 la conversation privée ouverte. Changer de conversation remet le dialogue à
-zéro ; sans conversation affichée, le champ est désactivé.
+zéro ; sans conversation affichée, le champ est désactivé. Un clic sur un
+résultat charge l'historique plus ancien jusqu'au message (pages de 100,
+20 au plus, sans trou), fait défiler jusqu'à lui et le met en évidence
+quelques secondes (`ChatUiShared.allerAuMessageAffiche`).
 
 **Temps réel sans rechargement.** Un message reçu, modifié ou supprimé (salon
 ou privé) est appliqué à l'état déjà affiché ; les listes ne défilent vers

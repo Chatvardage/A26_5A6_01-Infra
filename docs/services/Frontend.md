@@ -300,7 +300,9 @@ d'instance (`~/.config/chatvardage-2`, etc.).
 2. Vérifier que seuls des messages de ce salon apparaissent (un mot présent
    dans un autre salon ou un DM n'est pas trouvé), le terme surligné, puis
    **Plus de résultats** s'il y en a d'autres.
-3. Changer de salon : le dialogue repart de zéro. Même vérification dans
+3. Cliquer un résultat ancien : la conversation remonte jusqu'à ce message,
+   mis en évidence quelques secondes.
+4. Changer de salon : le dialogue repart de zéro. Même vérification dans
    une conversation privée.
 
 ### Langue et thème
