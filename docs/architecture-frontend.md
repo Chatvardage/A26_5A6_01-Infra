@@ -168,8 +168,11 @@ src/
       i18n-browser.js        window.I18n
       theme-browser.js       window.ThemeManager (data-theme sur <html>)
       chat-ui-shared.js      window.ChatUiShared : réseau, présence,
-                             avatars, actions de message, rôles
-      notif-prefs.js         window.NotifPrefs : non-lus, mode de notif.
+                             avatars, actions de message, rôles,
+                             dialogue de recherche de messages
+      notif-prefs.js         window.NotifPrefs : compteurs de non-lus
+                             (copie de l'état de Message-Service), mode
+                             de notif.
     css/
       styles.css             Styles communs (variables de thème, barre de
                              titre, messages, dialogues, panneau des
@@ -215,6 +218,21 @@ aussi vouloir dire « mot de passe actuel incorrect ». Si le jeton est
 refusé, la session est fermée et `session-expiree` est émis : `main.js`
 ramène la fenêtre à l'écran de connexion, qui l'explique
 (`navigation:motif-retour-connexion`).
+
+**Messages non lus.** Les compteurs viennent de Message-Service
+(`messages:non-lus` → `GET /api/messages/unread`), chargés à l'ouverture de
+chaque page et après chaque `connexion.prete`. Un message reçu d'autrui
+incrémente le compteur de sa conversation ; l'affichage de la conversation
+active, fenêtre au premier plan, la marque lue (`messages:marquer-lu` →
+`PUT …/read`) et remet son compteur à zéro. Salons et conversations privées
+affichent un compteur (« 99+ » au-delà), les serveurs du rail une pastille,
+l'icône de l'app le total. Le mode de notification « aucune » les masque.
+
+**Recherche.** Le bouton « Rechercher » des deux pages ouvre le dialogue
+`#search-dialog` (`ChatUiShared.brancherRechercheMessages`,
+`messages:rechercher` → `GET /api/messages/search`). Un résultat ouvre sa
+conversation, sur la page courante ou sur l'autre (`definirCibleNavigation`),
+comme un clic sur une notification.
 
 **Temps réel sans rechargement.** Un message reçu, modifié ou supprimé (salon
 ou privé) est appliqué à l'état déjà affiché ; les listes ne défilent vers

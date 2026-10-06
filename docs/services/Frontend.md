@@ -27,6 +27,9 @@ présence et messages de salon en temps réel via Socket.IO. Voir
 - Historique paginé (« charger les messages plus anciens »).
 - États réseau : connecté, déconnecté et reconnexion (Socket.IO).
 - Notifications système lorsqu'un message arrive hors focus.
+- Compteur de messages non lus par salon et par conversation privée, tenu
+  par Message-Service : identique après un redémarrage et sur le mobile.
+- Recherche de messages dans les conversations et salons accessibles.
 - Modification et suppression de ses propres messages.
 - Page de profil (pseudo, mot de passe, thème/langue/notifications). Le
   courriel est affiché mais n'est pas modifiable.
@@ -273,7 +276,18 @@ d'instance (`~/.config/chatvardage-2`, etc.).
 1. Choisir le mode de notification souhaité.
 2. Mettre la fenêtre hors focus ou afficher une autre conversation.
 3. Recevoir un message d'un second compte et vérifier la notification
-   système / l'indicateur non lu.
+   système et le compteur non lu de la conversation (pastille du serveur
+   pour un salon, rond du bouton des messages privés pour un DM).
+4. Ouvrir la conversation : le compteur disparaît. Relancer l'app avant de
+   l'ouvrir : le compteur est toujours là (état tenu par le serveur).
+
+### Recherche
+
+1. Cliquer sur **Rechercher** (barre du haut), taper au moins 2 caractères.
+2. Vérifier que seuls des messages de ses DM et de ses salons apparaissent,
+   le terme surligné, puis **Plus de résultats** s'il y en a d'autres.
+3. Cliquer un résultat de salon puis un résultat privé : la bonne
+   conversation s'ouvre, y compris depuis l'autre page.
 
 ### Langue et thème
 

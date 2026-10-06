@@ -67,6 +67,9 @@ pour le détail par service.
 | PATCH/DELETE | `/api/messages/rooms/:roomId/:id` | Modifier (auteur) / supprimer (auteur, ou modérateur du serveur) un message de salon |
 | POST/GET | `/api/messages`, `/api/messages/history/:otherUserId` | Messages privés (DM) |
 | GET | `/api/messages/conversations` | Liste des conversations privées |
+| GET | `/api/messages/unread` | Compteurs de messages non lus (salons et DM) |
+| PUT | `/api/messages/rooms/:roomId/read`, `/api/messages/conversations/:otherUserId/read` | Marquer une conversation comme lue (conversation affichée, fenêtre au premier plan) |
+| GET | `/api/messages/search?q=&limit=20&cursor=` | Recherche dans les conversations accessibles |
 | PATCH/DELETE | `/api/messages/:id` | Modifier/supprimer un DM |
 | GET/PATCH | `/api/config-utilisateur` | Alias, thème, langue, mode de notification |
 | PUT | `/api/config-utilisateur/presence` | Présence (soi-même uniquement) |
