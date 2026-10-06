@@ -168,8 +168,11 @@ src/
       i18n-browser.js        window.I18n
       theme-browser.js       window.ThemeManager (data-theme sur <html>)
       chat-ui-shared.js      window.ChatUiShared : réseau, présence,
-                             avatars, actions de message, rôles
-      notif-prefs.js         window.NotifPrefs : non-lus, mode de notif.
+                             avatars, actions de message, rôles,
+                             dialogue de recherche de messages
+      notif-prefs.js         window.NotifPrefs : compteurs de non-lus
+                             (copie de l'état de Message-Service), mode
+                             de notif.
     css/
       styles.css             Styles communs (variables de thème, barre de
                              titre, messages, dialogues, panneau des
@@ -215,6 +218,35 @@ aussi vouloir dire « mot de passe actuel incorrect ». Si le jeton est
 refusé, la session est fermée et `session-expiree` est émis : `main.js`
 ramène la fenêtre à l'écran de connexion, qui l'explique
 (`navigation:motif-retour-connexion`).
+
+**Messages non lus.** Les compteurs viennent de Message-Service
+(`messages:non-lus` → `GET /api/messages/unread`), chargés à l'ouverture de
+chaque page et après chaque `connexion.prete`. Un message reçu d'autrui
+incrémente le compteur de sa conversation ; l'affichage de la conversation
+active, fenêtre au premier plan, la marque lue (`messages:marquer-lu` →
+`PUT …/read`) et remet son compteur à zéro. Salons et conversations privées
+affichent un compteur (« 99+ » au-delà), les serveurs du rail une pastille,
+l'icône de l'app le total. Le mode de notification « aucune » les masque.
+
+**Accusés de lecture.** À l'ouverture d'une conversation, la page retient
+son nombre de non-lus (avant de la marquer lue) pour placer la ligne
+« Nouveaux messages » au-dessus du premier non-lu, et charge les lectures des
+autres (`messages:lectures`). Messages privés : ✓ (distribué, enregistré par
+le serveur) ou ✓✓ (lu) sur chacun de mes messages, « Distribué » / « Lu à … »
+sous mon dernier message s'il termine la conversation. Salons : « Vu par … »
+sous le dernier message. L'événement Socket.IO `read-state.updated`, relayé
+par `messages:lecture-change`, les met à jour en direct ; lu depuis un autre
+de mes appareils, il fait relire les compteurs de non-lus.
+
+**Recherche.** Le bouton « Rechercher » des deux pages ouvre le dialogue
+`#search-dialog` (`ChatUiShared.brancherRechercheMessages`,
+`messages:rechercher` → `GET /api/messages/search?conversationId=…`). La
+recherche porte uniquement sur la conversation affichée : le salon actif, ou
+la conversation privée ouverte. Changer de conversation remet le dialogue à
+zéro ; sans conversation affichée, le champ est désactivé. Un clic sur un
+résultat charge l'historique plus ancien jusqu'au message (pages de 100,
+20 au plus, sans trou), fait défiler jusqu'à lui et le met en évidence
+quelques secondes (`ChatUiShared.allerAuMessageAffiche`).
 
 **Temps réel sans rechargement.** Un message reçu, modifié ou supprimé (salon
 ou privé) est appliqué à l'état déjà affiché ; les listes ne défilent vers

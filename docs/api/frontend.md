@@ -67,6 +67,10 @@ pour le détail par service.
 | PATCH/DELETE | `/api/messages/rooms/:roomId/:id` | Modifier (auteur) / supprimer (auteur, ou modérateur du serveur) un message de salon |
 | POST/GET | `/api/messages`, `/api/messages/history/:otherUserId` | Messages privés (DM) |
 | GET | `/api/messages/conversations` | Liste des conversations privées |
+| GET | `/api/messages/unread` | Compteurs de messages non lus (salons et DM) |
+| PUT | `/api/messages/rooms/:roomId/read`, `/api/messages/conversations/:otherUserId/read` | Marquer une conversation comme lue (conversation affichée, fenêtre au premier plan) |
+| GET | `/api/messages/conversations/:otherUserId/read-state`, `/api/messages/rooms/:roomId/read-states` | Accusés de lecture : ✓✓ des messages privés, « Vu par » des salons |
+| GET | `/api/messages/search?q=&limit=20&cursor=&conversationId=` | Recherche dans la conversation affichée (`room:<salon>` ou `dm:<interlocuteur>`) |
 | PATCH/DELETE | `/api/messages/:id` | Modifier/supprimer un DM |
 | GET/PATCH | `/api/config-utilisateur` | Alias, thème, langue, mode de notification |
 | PUT | `/api/config-utilisateur/presence` | Présence (soi-même uniquement) |
@@ -74,7 +78,8 @@ pour le détail par service.
 Socket.IO (`/messages`, `auth: { token }`) : `private-message.created/updated/deleted`,
 `room-message.created/updated/deleted` (client émet aussi `room-message.join`/
 `leave`/`send` — seulement après `connexion.prete`, voir plus bas),
-`connexion.prete` (socket authentifié par Message-Service : le client
+`read-state.updated` (accusé de lecture : ✓✓, « Vu par », non-lus lus depuis
+un autre appareil), `connexion.prete` (socket authentifié par Message-Service : le client
 annonce alors sa présence et rejoint ses salons ; avant, le serveur refuse
 ses événements — repli au bout de 5 s si l'événement n'arrive jamais, par
 exemple face à un Message-Service plus ancien), `room-message.revoked` (accès au salon perdu : le client

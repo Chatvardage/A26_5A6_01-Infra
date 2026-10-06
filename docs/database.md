@@ -25,7 +25,7 @@ PostgreSQL est la source de vérité. Redis Pub/Sub/WebSocket sert à diffuser l
 
 ## Schémas métier de référence
 
-Instantané des modèles Prisma au 1er octobre 2026. Les migrations SQL des dépôts propriétaires restent exécutables et font autorité (notamment l’index fonctionnel de courriel Auth). Aucune clé étrangère ne traverse les bases.
+Instantané des modèles Prisma au 1er octobre 2026 (état de lecture de Message-Service ajouté le 6 octobre 2026). Les migrations SQL des dépôts propriétaires restent exécutables et font autorité (notamment l’index fonctionnel de courriel Auth). Aucune clé étrangère ne traverse les bases.
 
 ### Authentification
 
@@ -185,6 +185,23 @@ model RoomMessage {
   updatedAt DateTime @updatedAt
 
   @@index([roomId, createdAt])
+}
+
+enum ConversationKind {
+  dm
+  room
+}
+
+// État de lecture (messages non lus) ; targetId = interlocuteur ou salon.
+model ConversationReadState {
+  userId     String
+  kind       ConversationKind
+  targetId   String
+  lastReadAt DateTime
+  updatedAt  DateTime         @updatedAt
+
+  @@id([userId, kind, targetId])
+  @@index([kind, targetId])
 }
 ```
 

@@ -27,6 +27,12 @@ présence et messages de salon en temps réel via Socket.IO. Voir
 - Historique paginé (« charger les messages plus anciens »).
 - États réseau : connecté, déconnecté et reconnexion (Socket.IO).
 - Notifications système lorsqu'un message arrive hors focus.
+- Compteur de messages non lus par salon et par conversation privée, tenu
+  par Message-Service : identique après un redémarrage et sur le mobile.
+- Recherche de messages dans le salon ou la conversation privée affichée.
+- Ligne « Nouveaux messages » au premier non-lu d'une conversation ouverte.
+- Accusés de lecture : ✓ distribué / ✓✓ lu et « Lu à … » dans les messages
+  privés, « Vu par … » dans les salons, en temps réel.
 - Modification et suppression de ses propres messages.
 - Page de profil (pseudo, mot de passe, thème/langue/notifications). Le
   courriel est affiché mais n'est pas modifiable.
@@ -273,7 +279,31 @@ d'instance (`~/.config/chatvardage-2`, etc.).
 1. Choisir le mode de notification souhaité.
 2. Mettre la fenêtre hors focus ou afficher une autre conversation.
 3. Recevoir un message d'un second compte et vérifier la notification
-   système / l'indicateur non lu.
+   système et le compteur non lu de la conversation (pastille du serveur
+   pour un salon, rond du bouton des messages privés pour un DM).
+4. Ouvrir la conversation : le compteur disparaît. Relancer l'app avant de
+   l'ouvrir : le compteur est toujours là (état tenu par le serveur).
+
+### Accusés de lecture
+
+1. A envoie deux messages privés à B, fenêtre de B ailleurs : chez A, ✓ et
+   « Distribué » sous son dernier message.
+2. B ouvre la conversation : la ligne « Nouveaux messages » précède les deux
+   messages ; chez A, sans recharger, ✓✓ et « Lu à … ».
+3. Dans un salon commun, A écrit, B et C l'ouvrent : chez A, « Vu par B, C »
+   sous le dernier message.
+
+### Recherche
+
+1. Ouvrir un salon, cliquer sur **Rechercher** (barre du haut) : le titre
+   indique « Rechercher dans # salon ». Taper au moins 2 caractères.
+2. Vérifier que seuls des messages de ce salon apparaissent (un mot présent
+   dans un autre salon ou un DM n'est pas trouvé), le terme surligné, puis
+   **Plus de résultats** s'il y en a d'autres.
+3. Cliquer un résultat ancien : la conversation remonte jusqu'à ce message,
+   mis en évidence quelques secondes.
+4. Changer de salon : le dialogue repart de zéro. Même vérification dans
+   une conversation privée.
 
 ### Langue et thème
 

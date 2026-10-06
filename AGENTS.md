@@ -99,3 +99,15 @@ Le job `compose-et-scripts` génère maintenant un secret temporaire avec `opens
 ## Documentation centrale
 
 Infra est la référence du démarrage complet, des architectures, contrats et scénarios de validation. Le README local décrit le dépôt et ses commandes; les guides détaillés sont dans `A26_5A6_01-Infra/docs/`. Toute modification de contrat doit mettre à jour la référence centrale et ses liens.
+
+## Revue PR #17 — décisions du 6 octobre 2026
+
+- Confidentialité de read-state DM : pas de nouvelle autorisation; MessagesController passe req.auth.id et lecteurDm consulte uniquement l'état de l'interlocuteur dont targetId est cet appelant. Charlie ne peut donc pas lire l'état entre Alice et Bob. JWT requis par le garde du contrôleur.
+- Recherche sans limite de fréquence spécifique : limite connue documentée dans AGENTS.md de Message-Service. Aucun index ni schéma métier dans Infra; un minimum de trois caractères seul ne remplace pas un index ou une limite de débit.
+- Index des lecteurs : reporté sans mesure montrant un tri coûteux; le résultat est borné à 100. Une migration éventuelle appartient à Message-Service.
+- Exemple limit=20 : conservé; c'est une URL valide avec la valeur par défaut. Le guide Message-Service précise déjà la plage 1 à 50.
+- Codes 404 pour interlocuteur inexistant : pas d'ajout inventé; le code retourne un état vide pour une conversation sans messages. 400 concerne un messageId hors conversation, et l'authentification reste obligatoire.
+- Vu par au-delà de 100 lecteurs : limite connue; l'API retourne au plus 100 lecteurs récents et ne fournit pas de total. Afficher un nombre d'autres lecteurs inventerait une information. Toute évolution nécessite un contrat coordonné.
+- Sections temps réel dupliquées : conservées; consolidation documentaire facultative, sans bug de contrat identifié.
+
+Validation : docker compose config, vérification des fichiers partagés et healthcheck de la stack passent. Le changement est uniquement documentaire : pas de down -v ni de reconstruction de la stack, pour préserver les données locales; aucune initialisation SQL ni migration n'a changé.
