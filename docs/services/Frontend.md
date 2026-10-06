@@ -29,7 +29,7 @@ présence et messages de salon en temps réel via Socket.IO. Voir
 - Notifications système lorsqu'un message arrive hors focus.
 - Compteur de messages non lus par salon et par conversation privée, tenu
   par Message-Service : identique après un redémarrage et sur le mobile.
-- Recherche de messages dans les conversations et salons accessibles.
+- Recherche de messages dans le salon ou la conversation privée affichée.
 - Modification et suppression de ses propres messages.
 - Page de profil (pseudo, mot de passe, thème/langue/notifications). Le
   courriel est affiché mais n'est pas modifiable.
@@ -283,11 +283,13 @@ d'instance (`~/.config/chatvardage-2`, etc.).
 
 ### Recherche
 
-1. Cliquer sur **Rechercher** (barre du haut), taper au moins 2 caractères.
-2. Vérifier que seuls des messages de ses DM et de ses salons apparaissent,
-   le terme surligné, puis **Plus de résultats** s'il y en a d'autres.
-3. Cliquer un résultat de salon puis un résultat privé : la bonne
-   conversation s'ouvre, y compris depuis l'autre page.
+1. Ouvrir un salon, cliquer sur **Rechercher** (barre du haut) : le titre
+   indique « Rechercher dans # salon ». Taper au moins 2 caractères.
+2. Vérifier que seuls des messages de ce salon apparaissent (un mot présent
+   dans un autre salon ou un DM n'est pas trouvé), le terme surligné, puis
+   **Plus de résultats** s'il y en a d'autres.
+3. Changer de salon : le dialogue repart de zéro. Même vérification dans
+   une conversation privée.
 
 ### Langue et thème
 

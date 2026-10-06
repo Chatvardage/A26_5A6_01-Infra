@@ -230,9 +230,10 @@ l'icône de l'app le total. Le mode de notification « aucune » les masque.
 
 **Recherche.** Le bouton « Rechercher » des deux pages ouvre le dialogue
 `#search-dialog` (`ChatUiShared.brancherRechercheMessages`,
-`messages:rechercher` → `GET /api/messages/search`). Un résultat ouvre sa
-conversation, sur la page courante ou sur l'autre (`definirCibleNavigation`),
-comme un clic sur une notification.
+`messages:rechercher` → `GET /api/messages/search?conversationId=…`). La
+recherche porte uniquement sur la conversation affichée : le salon actif, ou
+la conversation privée ouverte. Changer de conversation remet le dialogue à
+zéro ; sans conversation affichée, le champ est désactivé.
 
 **Temps réel sans rechargement.** Un message reçu, modifié ou supprimé (salon
 ou privé) est appliqué à l'état déjà affiché ; les listes ne défilent vers

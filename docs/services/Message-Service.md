@@ -177,7 +177,9 @@ Corps facultatif des deux `PUT` : `{ "messageId": "<uuid>" }`, le dernier messag
 
 ### Recherche
 
-`GET /api/messages/search?q=<texte>&limit=20&cursor=<nextCursor>` (JWT requis) cherche `q` (2 à 100 caractères après retrait des espaces) dans le contenu, sans tenir compte de la casse. `%` et `_` sont pris littéralement. Seules les conversations accessibles sont lues : les DM dont l'utilisateur est expéditeur ou destinataire, et les salons qu'il peut lire selon Room-Service. Si Room-Service ne répond pas, la recherche échoue (**503**) au lieu de renvoyer des résultats incomplets.
+`GET /api/messages/search?q=<texte>&limit=20&cursor=<nextCursor>&conversationId=<dm:… | room:…>` (JWT requis) cherche `q` (2 à 100 caractères après retrait des espaces) dans le contenu, sans tenir compte de la casse. `%` et `_` sont pris littéralement. Seules les conversations accessibles sont lues : les DM dont l'utilisateur est expéditeur ou destinataire, et les salons qu'il peut lire selon Room-Service. Si Room-Service ne répond pas, la recherche échoue (**503**) au lieu de renvoyer des résultats incomplets.
+
+`conversationId` (facultatif) limite la recherche à une seule conversation : `dm:<interlocuteur>` (messages échangés avec lui) ou `room:<salon>` (droit de lecture vérifié auprès de Room-Service : **403** sinon, **404** pour un salon inconnu). Une autre forme donne **400**. C'est ce qu'utilise le client desktop (recherche dans le salon ou la conversation affichée) ; sans ce paramètre, la recherche couvre toutes les conversations accessibles.
 
 ```json
 {

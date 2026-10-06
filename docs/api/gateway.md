@@ -83,7 +83,7 @@ Non-lus et recherche (DM et salons lisibles uniquement) :
 | Méthode | Route Gateway |
 |---|---|
 | GET | `/api/messages/unread` |
-| GET | `/api/messages/search?q=<texte>&limit=20&cursor=<nextCursor>` |
+| GET | `/api/messages/search?q=<texte>&limit=20&cursor=<nextCursor>&conversationId=<dm:… \| room:…>` (`conversationId` facultatif : une seule conversation) |
 
 Routes admin de messages (JWT admin requis) : `GET/POST /api/messages/admin`, `DELETE /api/messages/admin/:id` et `POST /api/messages/rooms/:roomId/admin`. Voir le guide Message-Service pour les corps et paramètres.
 
