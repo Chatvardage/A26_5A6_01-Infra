@@ -102,3 +102,10 @@ verifierSessionApres401, au lieu de se reconnecter en boucle), `typing`
   gateway retente automatiquement avec un pseudo légèrement randomisé). Une
   fois inscrit⋅e, l'écran "Choisis ton pseudo" permet de le changer tout de
   suite (ou plus tard, depuis la page profil).
+
+
+### Position complète des accusés de lecture (Message-Service #9 / Frontend #100)
+
+Les réponses HTTP `read-state` / `read-states` et les événements `read-state.updated` exposent `lastReadMessageId`, en plus de `lastReadAt`. La position de lecture est le couple `(date, identifiant)`, ordonné comme l’historique : comparer la date puis l’identifiant. Une lecture ancienne sans identifiant (`null` ou champ absent) couvre toute sa milliseconde. Chaque consommateur conserve la position maximale et fusionne la réponse HTTP initiale avec les événements reçus pendant le chargement : ni une réponse tardive ni un événement désordonné ne doit faire reculer les coches ou « Vu par ». Le changement est additif; un client qui utilise uniquement la date doit être mis à jour pour distinguer deux messages de même milliseconde.
+
+Frontend conserve l’identifiant du premier non-lu pendant la consultation; de nouveaux messages ne déplacent pas le séparateur. Après un marquage réussi, le compteur est réconcilié avec `unreadCount` et les messages arrivés en cours de requête sont marqués ensuite uniquement si la conversation reste affichée au premier plan.
