@@ -60,7 +60,8 @@ Messages privés :
 | Méthode | Route Gateway |
 |---|---|
 | POST | `/api/messages` |
-| GET | `/api/messages/conversations` |
+| GET | `/api/messages/conversations` (avec `unreadCount`) |
+| PUT | `/api/messages/conversations/:otherUserId/read` |
 | GET | `/api/messages/history/:otherUserId?limit=50&cursor=<messageId>` |
 | GET | `/api/messages/:id` |
 | PATCH | `/api/messages/:id` |
@@ -72,9 +73,17 @@ Messages de salon (droits de lecture/écriture vérifiés auprès de Room-Servic
 |---|---|
 | POST | `/api/messages/rooms/:roomId` |
 | GET | `/api/messages/rooms/:roomId/history?limit=50&cursor=<messageId>` |
+| PUT | `/api/messages/rooms/:roomId/read` |
 | GET | `/api/messages/rooms/:roomId/:id` |
 | PATCH | `/api/messages/rooms/:roomId/:id` |
 | DELETE | `/api/messages/rooms/:roomId/:id` |
+
+Non-lus et recherche (DM et salons lisibles uniquement) :
+
+| Méthode | Route Gateway |
+|---|---|
+| GET | `/api/messages/unread` |
+| GET | `/api/messages/search?q=<texte>&limit=20&cursor=<nextCursor>` |
 
 Routes admin de messages (JWT admin requis) : `GET/POST /api/messages/admin`, `DELETE /api/messages/admin/:id` et `POST /api/messages/rooms/:roomId/admin`. Voir le guide Message-Service pour les corps et paramètres.
 

@@ -126,6 +126,7 @@ Toutes les routes sont préfixées par `/api` et exigent un JWT, sauf mention co
 | Méthode | Route | Protection | Description |
 |---|---|---|---|
 | GET | `/api/internal/channels/:id/access/:userId?role=` | en-tête `x-internal-token` = `INTERNAL_SERVICE_TOKEN` | `{ salonId, serveurId, estMembre, peutLire, peutEcrire, peutModerer }` (`peutModerer` : modérateur du serveur, propriétaire ou admin, qui peut supprimer les messages des autres) |
+| GET | `/api/internal/users/:userId/channels?role=` | idem | Salons que l'utilisateur peut lire (mêmes règles que la route précédente ; un admin global les lit tous) : `{ salons: [{ salonId, serveurId, depuis }] }`, `depuis` = date d'arrivée dans le serveur (ISO 8601) ou `null` sans ligne de membre (admin non membre, serveur par défaut pas encore rejoint). Sert à la recherche et aux non-lus de Message-Service |
 | DELETE | `/api/internal/users/:userId` | idem (appelée par Authentification) | Compte supprimé : ses serveurs (et leurs salons) sont supprimés, il quitte les autres, ses invitations reçues disparaissent. Idempotent. Réponse `{ serveursSupprimes, serveursQuittes, invitationsSupprimees }` |
 
 `role` est le rôle global (`admin` \| `utilisateur`, défaut `utilisateur`) issu du JWT que Message-Service a déjà validé. Sans `INTERNAL_SERVICE_TOKEN` configuré, la route répond toujours 503 (échec fermé). **Serveur-API ne relaie pas `/api/internal`** : seuls les autres microservices, sur le réseau Docker interne, peuvent l'appeler. Le port du Room-Service ne doit pas être exposé publiquement.
