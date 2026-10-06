@@ -112,6 +112,10 @@ L'événement `typing` `{ scope: 'room' | 'dm', targetId, isTyping }` est **éph
 
 Le payload réémis est `{ userId, scope, targetId, isTyping }`, où `userId` provient de l'identité authentifiée du socket émetteur (jamais du payload client).
 
+## Accusés de lecture
+
+Quand un utilisateur marque une conversation comme lue et que son état avance (`PUT …/read`), Message-Service écrit d'abord l'état en base, puis publie `read-state.updated` sur Redis. L'événement `{ kind, targetId, userId, lastReadAt }` est émis à la room `room:<salon>` (sockets qui ont rejoint le salon). Même chemin que les messages : `DB -> Redis PUBLISH -> Redis SUBSCRIBE -> Socket.IO`.
+
 ## Authentification et origine WebSocket
 
 Identique aux DM : voir [temps réel DM](../api/temps-reel-dm.md). La validation du JWT est déléguée à Auth-Service (`AUTH_SERVICE_TIMEOUT_MS`), et la vérification d'appartenance aux salons est déléguée à Room-Service (`ROOM_SERVICE_TIMEOUT_MS`). Les deux réponses sont mémorisées brièvement (`AUTH_CACHE_TTL_MS`, `ROOM_ACCESS_CACHE_TTL_MS`, voir le [guide Message-Service](../services/Message-Service.md#variables-denvironnement)) ; un changement de serveur vide aussitôt le cache des accès à ce serveur.

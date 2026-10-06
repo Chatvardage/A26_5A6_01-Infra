@@ -228,6 +228,16 @@ active, fenêtre au premier plan, la marque lue (`messages:marquer-lu` →
 affichent un compteur (« 99+ » au-delà), les serveurs du rail une pastille,
 l'icône de l'app le total. Le mode de notification « aucune » les masque.
 
+**Accusés de lecture.** À l'ouverture d'une conversation, la page retient
+son nombre de non-lus (avant de la marquer lue) pour placer la ligne
+« Nouveaux messages » au-dessus du premier non-lu, et charge les lectures des
+autres (`messages:lectures`). Messages privés : ✓ (distribué, enregistré par
+le serveur) ou ✓✓ (lu) sur chacun de mes messages, « Distribué » / « Lu à … »
+sous mon dernier message s'il termine la conversation. Salons : « Vu par … »
+sous le dernier message. L'événement Socket.IO `read-state.updated`, relayé
+par `messages:lecture-change`, les met à jour en direct ; lu depuis un autre
+de mes appareils, il fait relire les compteurs de non-lus.
+
 **Recherche.** Le bouton « Rechercher » des deux pages ouvre le dialogue
 `#search-dialog` (`ChatUiShared.brancherRechercheMessages`,
 `messages:rechercher` → `GET /api/messages/search?conversationId=…`). La

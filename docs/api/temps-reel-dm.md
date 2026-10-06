@@ -36,6 +36,10 @@ Pour une suppression, l'événement contient encore `senderId` et `recipientId`,
 
 La suppression d'un compte (`DELETE /api/internal/users/:userId`, appelée par Authentification) efface ses conversations **sans événement temps réel** (voir [temps réel salons](../api/temps-reel-salons.md), « Effacements en masse »).
 
+## Accusés de lecture
+
+Quand un utilisateur marque une conversation comme lue et que son état avance (`PUT …/read`), Message-Service écrit d'abord l'état en base, puis publie `read-state.updated` sur Redis. L'événement `{ kind, targetId, userId, lastReadAt }` est émis aux deux personnes de la conversation (`user:<lecteur>` et `user:<interlocuteur>`). Même chemin que les messages : `DB -> Redis PUBLISH -> Redis SUBSCRIBE -> Socket.IO`.
+
 ## Authentification
 
 Les connexions REST utilisent `Authorization: Bearer <JWT>` et Socket.IO utilise `auth.token`. Message-Service ne décode pas le jeton lui-même : il le fait valider par Authentification (`GET /api/auth/me`) et prend l'`id` de l'utilisateur renvoyé. Un identifiant fourni par le client (`x-user-id`, `handshake.auth.userId`) n'est jamais accepté.

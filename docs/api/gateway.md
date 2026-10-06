@@ -83,6 +83,8 @@ Non-lus et recherche (DM et salons lisibles uniquement) :
 | Méthode | Route Gateway |
 |---|---|
 | GET | `/api/messages/unread` |
+| GET | `/api/messages/conversations/:otherUserId/read-state` |
+| GET | `/api/messages/rooms/:roomId/read-states` |
 | GET | `/api/messages/search?q=<texte>&limit=20&cursor=<nextCursor>&conversationId=<dm:… \| room:…>` (`conversationId` facultatif : une seule conversation) |
 
 Routes admin de messages (JWT admin requis) : `GET/POST /api/messages/admin`, `DELETE /api/messages/admin/:id` et `POST /api/messages/rooms/:roomId/admin`. Voir le guide Message-Service pour les corps et paramètres.
@@ -126,6 +128,7 @@ Le Gateway relaie les événements tels quels ; leur contrat détaillé est dans
 - `private-message.created`, `private-message.updated`, `private-message.deleted`
 - `room-message.created`, `room-message.updated`, `room-message.deleted`
 - `room-message.revoked` (socket retiré d'un salon dont l'accès est perdu)
+- `read-state.updated` (`{ kind, targetId, userId, lastReadAt }` : accusé de lecture d'un DM ou d'un salon)
 - `typing`
 - `connexion.prete` (socket authentifié : le client peut annoncer sa présence et rejoindre ses salons)
 - `session.revoquee` (jeton refusé à la connexion ou à la revalidation périodique : le socket est ensuite déconnecté)

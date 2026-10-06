@@ -175,6 +175,17 @@ Corps facultatif des deux `PUT` : `{ "messageId": "<uuid>" }`, le dernier messag
 
 `lastReadAt` vaut `null` pour une conversation vide jamais lue.
 
+#### Accusés de lecture
+
+| Méthode | Route | Réponse |
+|---|---|---|
+| GET | `/api/messages/conversations/:otherUserId/read-state` | `{ userId, lastReadAt }` : jusqu'où l'interlocuteur a lu la conversation (`null` : jamais) |
+| GET | `/api/messages/rooms/:roomId/read-states` | `{ lecteurs: [{ userId, lastReadAt }] }` : les autres lecteurs du salon, du plus récent au plus ancien, 100 au plus ; lecture du salon requise (403/404) |
+
+Chaque avancée réelle d'un état de lecture est publiée sur Redis **après** l'écriture en base, puis émise par Socket.IO : `read-state.updated` `{ kind: 'dm' | 'room', targetId, userId, lastReadAt }` (`userId` a lu la conversation `targetId` jusqu'à `lastReadAt`). Pour un DM, l'événement va aux deux personnes : l'autre met à jour ses accusés de lecture, les autres appareils du lecteur effacent leurs non-lus. Pour un salon, il va aux sockets qui l'ont rejoint (« Vu par »). Un marquage qui ne fait pas avancer l'état ne publie rien.
+
+Limite connue : un ancien membre d'un salon qui l'avait lu peut encore figurer parmi ses lecteurs (filtrer demanderait d'interroger Room-Service à chaque fois).
+
 ### Recherche
 
 `GET /api/messages/search?q=<texte>&limit=20&cursor=<nextCursor>&conversationId=<dm:… | room:…>` (JWT requis) cherche `q` (2 à 100 caractères après retrait des espaces) dans le contenu, sans tenir compte de la casse. `%` et `_` sont pris littéralement. Seules les conversations accessibles sont lues : les DM dont l'utilisateur est expéditeur ou destinataire, et les salons qu'il peut lire selon Room-Service. Si Room-Service ne répond pas, la recherche échoue (**503**) au lieu de renvoyer des résultats incomplets.
@@ -212,6 +223,7 @@ Namespace Socket.IO : `/messages`.
 - `private-message.created`
 - `private-message.updated`
 - `private-message.deleted`
+- `read-state.updated` (accusé de lecture, voir « Messages non lus et état de lecture »)
 
 Après validation du JWT par Auth-Service, le client est placé dans la room `user:<id>` correspondant à l'utilisateur authentifié. Il ne choisit donc pas son identité.
 

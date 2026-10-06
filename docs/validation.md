@@ -40,6 +40,7 @@ Vérifier les migrations sur les quatre bases neuves. Redémarrer sans supprimer
 | 14 | A écrit à B (DM et salon commun) pendant que B est ailleurs | `GET /api/messages/unread` de B compte ces messages, pas ceux de B ; `PUT …/read` les remet à zéro |
 | 15 | Redémarrer Message-Service sans supprimer les volumes | Mêmes compteurs de non-lus qu'avant le redémarrage |
 | 16 | B cherche un mot présent dans un DM entre A et C et dans un salon commun | Seul le message du salon commun est trouvé ; pages suivantes sans doublon |
+| 17 | A écrit à B ; B ouvre la conversation | Chez A, ✓ puis ✓✓ et « Lu à … » sans recharger ; chez B, « Nouveaux messages » au premier non-lu |
 
 Utiliser des comptes et salons jetables pour les suppressions. La suppression du dernier salon et celle du serveur par défaut sont volontairement refusées.
 

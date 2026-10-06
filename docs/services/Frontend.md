@@ -30,6 +30,9 @@ présence et messages de salon en temps réel via Socket.IO. Voir
 - Compteur de messages non lus par salon et par conversation privée, tenu
   par Message-Service : identique après un redémarrage et sur le mobile.
 - Recherche de messages dans le salon ou la conversation privée affichée.
+- Ligne « Nouveaux messages » au premier non-lu d'une conversation ouverte.
+- Accusés de lecture : ✓ distribué / ✓✓ lu et « Lu à … » dans les messages
+  privés, « Vu par … » dans les salons, en temps réel.
 - Modification et suppression de ses propres messages.
 - Page de profil (pseudo, mot de passe, thème/langue/notifications). Le
   courriel est affiché mais n'est pas modifiable.
@@ -280,6 +283,15 @@ d'instance (`~/.config/chatvardage-2`, etc.).
    pour un salon, rond du bouton des messages privés pour un DM).
 4. Ouvrir la conversation : le compteur disparaît. Relancer l'app avant de
    l'ouvrir : le compteur est toujours là (état tenu par le serveur).
+
+### Accusés de lecture
+
+1. A envoie deux messages privés à B, fenêtre de B ailleurs : chez A, ✓ et
+   « Distribué » sous son dernier message.
+2. B ouvre la conversation : la ligne « Nouveaux messages » précède les deux
+   messages ; chez A, sans recharger, ✓✓ et « Lu à … ».
+3. Dans un salon commun, A écrit, B et C l'ouvrent : chez A, « Vu par B, C »
+   sous le dernier message.
 
 ### Recherche
 
