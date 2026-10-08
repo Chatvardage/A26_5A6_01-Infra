@@ -55,7 +55,7 @@ pour le détail par service.
 | GET | `/api/users/lookup?ids=` | Résolution de pseudo pour d'autres utilisateurs (id → pseudo uniquement) |
 | GET | `/api/users/search?q=` | Recherche par début de pseudo (nouveau DM, invitation) |
 | GET/POST | `/api/servers` | Mes serveurs (sans la liste des membres) / créer un serveur |
-| GET | `/api/servers/decouvrir?q=`, `/api/servers/invitations/me` | Serveurs publics à rejoindre, mes invitations |
+| GET | `/api/servers/decouvrir?q=&decalage=&limite=`, `/api/servers/invitations/me` | Serveurs publics à rejoindre (par pages : `{ serveurs, total, suivant }`), mes invitations |
 | PATCH/DELETE | `/api/servers/:id` | Modifier (nom, icône, visibilité) / supprimer |
 | POST | `/api/servers/:id/join`, `/leave` | Rejoindre / quitter un serveur |
 | GET | `/api/servers/:id/members?decalage=&limite=` | Membres par pages (panneau des membres) |

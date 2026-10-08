@@ -30,7 +30,7 @@ Toutes ces routes exigent un Bearer JWT, validé par Room-Service auprès d'Auth
 | Méthode | Route Gateway | Droits |
 |---|---|---|
 | GET | `/api/servers` | mes serveurs (ajoute l'appelant au serveur par défaut) |
-| GET | `/api/servers/decouvrir?q=<nom>` | serveurs publics dont je ne suis pas membre |
+| GET | `/api/servers/decouvrir?q=<nom>&decalage=&limite=` | serveurs publics dont je ne suis pas membre, par pages (`{ serveurs, total, suivant }`, 20 par défaut, 100 au plus) |
 | GET | `/api/servers/invitations/me` | mes invitations |
 | POST | `/api/servers` | tout utilisateur (devient propriétaire) |
 | GET | `/api/servers/:id` | membre ; aperçu si public et non-membre (sans liste des membres) |

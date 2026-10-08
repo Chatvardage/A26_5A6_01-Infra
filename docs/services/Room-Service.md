@@ -87,7 +87,7 @@ Toutes les routes sont préfixées par `/api` et exigent un JWT, sauf mention co
 | Méthode | Route | Qui | Description |
 |---|---|---|---|
 | GET | `/api/servers` | connecté | Mes serveurs, Chatvardage en premier (m'y ajoute si besoin) |
-| GET | `/api/servers/decouvrir?q=` | connecté | Serveurs publics dont je ne suis pas membre (nom contenant `q`, 20 max) |
+| GET | `/api/servers/decouvrir?q=&decalage=&limite=` | connecté | Serveurs publics dont je ne suis pas membre (nom contenant `q`), par pages : `{ serveurs, total, suivant }`, 20 par défaut, 100 au plus |
 | POST | `/api/servers` | connecté | Créer un serveur `{ nom, public? }` ; j'en deviens propriétaire (100 serveurs possédés au plus, sinon 400) |
 | GET | `/api/servers/:id` | membre (aperçu si public) | Détail ; 404 si privé et non-membre |
 | GET | `/api/servers/:id/members?decalage=&limite=&ids=` | membre | Membres par pages (voir ci-dessus) ; 403 si non-membre d'un serveur public |
