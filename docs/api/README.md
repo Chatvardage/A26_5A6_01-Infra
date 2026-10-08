@@ -6,6 +6,7 @@ Base d’entrée Electron : `http://localhost:3000`. JSON sur HTTP, JWT dans `Au
 - [Authentification : corps, réponses et permissions](authentification.md)
 - [Serveurs/salons : routes, DTO et rôles](../services/Room-Service.md)
 - [Messages : REST, pagination et administration](../services/Message-Service.md)
+- [Recherche : comptes par personne, serveur et salon](recherche-resume.md)
 - [Configuration : modèles et identité interne](../services/User-Config-Service.md)
 - [Diffusion des DM](temps-reel-dm.md)
 - [Diffusion des salons](temps-reel-salons.md)

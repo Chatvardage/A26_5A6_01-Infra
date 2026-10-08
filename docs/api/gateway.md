@@ -83,6 +83,7 @@ Non-lus et recherche (DM et salons lisibles uniquement) :
 | Méthode | Route Gateway |
 |---|---|
 | GET | `/api/messages/unread` |
+| GET | `/api/messages/search/summary?q=<texte>` (comptes complets par personne, serveur et salon lisible; [contrat](recherche-resume.md)) |
 | GET | `/api/messages/conversations/:otherUserId/read-state` |
 | GET | `/api/messages/rooms/:roomId/read-states` |
 | GET | `/api/messages/search?q=<texte>&limit=20&cursor=<nextCursor>&conversationId=<dm:… \| room:…>` (`conversationId` facultatif : une seule conversation) |
