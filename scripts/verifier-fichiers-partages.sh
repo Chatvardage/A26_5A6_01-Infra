@@ -34,6 +34,8 @@ verifier() {
 }
 
 AUTH_CLIENTS="A26_5A6_01-Room-Service A26_5A6_01-Message-Service"
+# Hooks et règles React communs au client mobile et au client Web (src/partage/ de chaque dépôt).
+CLIENTS_REACT="A26_5A6_01-Mobile A26_5A6_01-Frontend"
 SECRETS="A26_5A6_01-Room-Service A26_5A6_01-Message-Service A26_5A6_01-User-Config-Service"
 
 # shellcheck disable=SC2086 # listes de dépôts séparées par des espaces
@@ -44,6 +46,11 @@ verifier client-auth.spec.ts $AUTH_CLIENTS
 verifier secrets-production.ts $SECRETS
 # shellcheck disable=SC2086
 verifier secrets-production.spec.ts $SECRETS
+
+for fichier in useAsyncResource.ts useSearch.ts search.ts groupResults.ts highlight.ts; do
+  # shellcheck disable=SC2086
+  verifier "$fichier" $CLIENTS_REACT
+done
 
 if [ "$echec" -ne 0 ]; then
   echo "Des fichiers partagés ont divergé : reporter la même modification dans chaque dépôt." >&2

@@ -239,4 +239,4 @@ Architecture multiservice : Electron passe par un Gateway unique (Serveur-API), 
 
 ## CI Infra
 
-Le CI valide Compose avec un secret de session temporaire, vérifie les scripts avec ShellCheck et compare les fichiers partagés entre services. Pour les dépôts privés, la comparaison requiert `CHATVARDAGE_REPOS_TOKEN` (lecture des contenus uniquement); sans ce secret, elle est signalée comme sautée. Les contrôles de chaque service restent dans leurs dépôts.
+Le CI valide Compose avec un secret de session temporaire, vérifie les scripts avec ShellCheck et compare les fichiers partagés entre services, ainsi que les hooks communs au client mobile et au client Web (`src/partage/` des dépôts Mobile et Frontend). Pour les dépôts privés, la comparaison requiert `CHATVARDAGE_REPOS_TOKEN` (lecture des contenus uniquement); sans ce secret, elle est signalée comme sautée. Les contrôles de chaque service restent dans leurs dépôts.
