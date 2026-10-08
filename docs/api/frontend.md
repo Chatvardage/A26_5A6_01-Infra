@@ -68,6 +68,7 @@ pour le détail par service.
 | POST/GET | `/api/messages`, `/api/messages/history/:otherUserId` | Messages privés (DM) |
 | GET | `/api/messages/conversations` | Liste des conversations privées |
 | GET | `/api/messages/unread` | Compteurs de messages non lus (salons et DM) |
+| GET | `/api/messages/activity` | Date du dernier message de chaque salon lisible (tri des serveurs par activité) |
 | PUT | `/api/messages/rooms/:roomId/read`, `/api/messages/conversations/:otherUserId/read` | Marquer une conversation comme lue (conversation affichée, fenêtre au premier plan) |
 | GET | `/api/messages/conversations/:otherUserId/read-state`, `/api/messages/rooms/:roomId/read-states` | Accusés de lecture : ✓✓ des messages privés, « Vu par » des salons |
 | GET | `/api/messages/search?q=&limit=20&cursor=&conversationId=` | Recherche dans la conversation affichée (`room:<salon>` ou `dm:<interlocuteur>`) |

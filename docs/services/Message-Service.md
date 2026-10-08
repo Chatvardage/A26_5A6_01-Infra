@@ -164,6 +164,7 @@ Un message est **non lu** s'il a été écrit par quelqu'un d'autre après le de
 | Méthode | Route | Effet |
 |---|---|---|
 | GET | `/api/messages/unread` | `{ "counts": { "dm:<id>": 2, "room:<id>": 5 } }` pour les DM et les salons lisibles ; seules les conversations avec des non-lus sont présentes. 503 si Room-Service ne répond pas |
+| GET | `/api/messages/activity` | `{ "rooms": { "room:<id>": "<date du dernier message>" } }` pour les salons lisibles (une requête groupée) ; les salons sans message sont absents. Sert à trier les serveurs du plus actif au moins actif. 503 si Room-Service ne répond pas |
 | PUT | `/api/messages/conversations/:otherUserId/read` | Marque le DM comme lu |
 | PUT | `/api/messages/rooms/:roomId/read` | Marque le salon comme lu ; 403 sans droit de lecture, 404 salon inconnu |
 
