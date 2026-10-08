@@ -39,7 +39,7 @@ Toutes ces routes exigent un Bearer JWT, validé par Room-Service auprès d'Auth
 | DELETE | `/api/servers/:id` | propriétaire ou admin (pas le serveur par défaut) |
 | POST | `/api/servers/:id/join` | serveur public, ou privé sur invitation |
 | POST | `/api/servers/:id/leave` | membre (ni le propriétaire, ni le serveur par défaut) |
-| DELETE | `/api/servers/:id/members/:userId` | modérateur minimum, au-dessus de la cible |
+| DELETE | `/api/servers/:id/members/:userId?nouveauProprietaire=<userId>` | modérateur minimum, au-dessus de la cible ; propriétaire : admin seulement, avec un membre successeur |
 | PATCH | `/api/servers/:id/members/:userId` | propriétaire ou admin (nommer/retirer un modérateur) |
 | POST | `/api/servers/:id/invitations` | modérateur minimum (pas le serveur par défaut) |
 | POST | `/api/servers/:id/invitations/accept` | invité |

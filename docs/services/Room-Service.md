@@ -95,7 +95,7 @@ Toutes les routes sont préfixées par `/api` et exigent un JWT, sauf mention co
 | DELETE | `/api/servers/:id` | propriétaire / admin | Supprime le serveur et ses salons ; interdit pour Chatvardage |
 | POST | `/api/servers/:id/join` | connecté | Rejoindre un serveur public, ou privé si invité |
 | POST | `/api/servers/:id/leave` | membre | Quitter ; interdit au propriétaire et pour Chatvardage |
-| DELETE | `/api/servers/:id/members/:userId` | modérateur+ | Expulser, seulement un membre de rang inférieur ; interdit dans Chatvardage |
+| DELETE | `/api/servers/:id/members/:userId?nouveauProprietaire=` | modérateur+ | Expulser, seulement un membre de rang inférieur ; interdit dans Chatvardage. Le propriétaire n'est expulsable que par un admin, qui désigne un autre membre dans `nouveauProprietaire` (400 sinon) : la propriété lui est transférée dans la même transaction |
 | PATCH | `/api/servers/:id/members/:userId` | propriétaire / admin | `{ role: 'membre' \| 'moderateur' }` |
 
 ### Invitations

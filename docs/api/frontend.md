@@ -60,7 +60,7 @@ pour le détail par service.
 | POST | `/api/servers/:id/join`, `/leave` | Rejoindre / quitter un serveur |
 | GET | `/api/servers/:id/members?decalage=&limite=` | Membres par pages (panneau des membres) |
 | GET | `/api/servers/:id/members?ids=` | Lesquels sont déjà membres (fenêtre « Inviter ») |
-| PATCH/DELETE | `/api/servers/:id/members/:userId` | Changer le rôle / expulser |
+| PATCH/DELETE | `/api/servers/:id/members/:userId` | Changer le rôle / expulser (`?nouveauProprietaire=<userId>` obligatoire pour expulser le propriétaire) |
 | POST | `/api/servers/:id/invitations`, `/invitations/accept`, `/invitations/refuse` | Invitations |
 | POST/PATCH/DELETE | `/api/servers/:id/channels`, `/api/channels/:id` | Créer / modifier / supprimer un salon |
 | POST/GET | `/api/messages/rooms/:roomId`, `/history` | Messages de salon |
