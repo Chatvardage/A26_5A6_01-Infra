@@ -56,10 +56,10 @@ jobs:
         if: env.JETON != ''
         with:
           path: A26_5A6_01-Infra
-      - name: Cloner les services qui partagent des fichiers
+      - name: Cloner les dépôts qui partagent des fichiers
         if: env.JETON != ''
         run: |
-          for depot in A26_5A6_01-Room-Service A26_5A6_01-Message-Service A26_5A6_01-User-Config-Service; do
+          for depot in A26_5A6_01-Room-Service A26_5A6_01-Message-Service A26_5A6_01-User-Config-Service A26_5A6_01-Mobile A26_5A6_01-Frontend; do
             url="https://x-access-token:${JETON}@github.com/${GITHUB_REPOSITORY_OWNER}/${depot}.git"
             git clone --quiet --depth 1 --branch "$BRANCHE" "$url" "$depot" 2>/dev/null \
               || git clone --quiet --depth 1 "$url" "$depot"

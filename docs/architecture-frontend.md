@@ -181,6 +181,23 @@ src/
       profil.css             Spécifique au profil
 ```
 
+## Code partagé avec le client mobile (`src/partage/`)
+
+`src/partage/` contient les hooks React et les règles pures communs au client Web et au client mobile
+(`A26_5A6_01-Mobile`), identiques à l'octet près dans les deux dépôts :
+
+| Fichier | Rôle |
+|---|---|
+| `useAsyncResource.ts` | Hook des cinq états d'une liste : chargement, erreur (raison + `retry`), vide, succès, rafraîchissement (liste gardée, `refreshError` si la mise à jour échoue) |
+| `useSearch.ts` | `useSearchResults({ search, describeError, debounceMs? }, conversationId?)` : recherche de messages avec délai de frappe, annulation et pagination sans doublon |
+| `search.ts`, `groupResults.ts`, `highlight.ts` | Types et règle de la recherche, regroupement des résultats (messages privés, puis par serveur), surlignage du texte cherché |
+
+Règle : ces fichiers n'importent que `react` et leurs voisins (chemins relatifs) ; chaque application fournit
+l'appel REST et les textes d'erreur. Le Frontend les teste avec Vitest et `@testing-library/react` (couverture à 100 %) ;
+le Mobile avec Jest. Toute modification se reporte à l'identique dans les deux dépôts, puis
+`A26_5A6_01-Infra/scripts/verifier-fichiers-partages.sh` le vérifie (aussi en CI). Les pages de chat actuelles
+(JS vanilla) ne les utilisent pas encore : seules les pages React (connexion) pourraient les importer.
+
 ## Flux importants
 
 **Ouverture de session.** La page de connexion appelle
