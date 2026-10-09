@@ -447,6 +447,7 @@ Documentation complète (requêtes, réponses, codes d'erreur) dans
 | PATCH | `/api/auth/me` | oui | Modifier son propre profil (pseudo/mot de passe ; le courriel n'est pas modifiable) |
 | DELETE | `/api/auth/me` | oui | Supprimer son propre compte (les autres services sont prévenus) |
 | POST | `/api/auth/logout-all` | oui | Se déconnecter partout (invalide tous ses jetons) |
+| POST | `/api/auth/logout-others` | oui | Déconnecter les autres appareils (invalide tous ses jetons, nouvelle session pour l'appareil courant) |
 | GET | `/api/users/lookup` | oui (tout utilisateur, pas seulement admin) | Résoudre `{id -> pseudo}` en lot pour d'autres comptes |
 | GET | `/api/users/search` | oui (tout utilisateur, pas seulement admin) | Chercher des comptes par début de pseudo (`{id, pseudo}` seulement) |
 | GET | `/api/users` | admin | Lister les comptes |

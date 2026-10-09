@@ -52,6 +52,7 @@ pour le détail par service.
 | POST | `/api/auth/register` | `{ pseudo, courriel, mot_de_passe }` → `{ jeton, utilisateur }` |
 | GET/PATCH/DELETE | `/api/auth/me` | Profil courant (lecture/modification/suppression du compte) |
 | POST | `/api/auth/logout-all` | « Se déconnecter partout » (page profil) : invalide tous les jetons du compte |
+| POST | `/api/auth/logout-others` | « Déconnecter les autres appareils » (page profil) : nouvelle session pour cet appareil, les autres sont déconnectés |
 | GET | `/api/users/lookup?ids=` | Résolution de pseudo pour d'autres utilisateurs (id → pseudo uniquement) |
 | GET | `/api/users/search?q=` | Recherche par début de pseudo (nouveau DM, invitation) |
 | GET/POST | `/api/servers` | Mes serveurs (sans la liste des membres) / créer un serveur |

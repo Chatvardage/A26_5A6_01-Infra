@@ -157,6 +157,10 @@ services:
       # (DELETE /api/internal/users/:id). Pas de depends_on : l'appel est
       # fait en tâche de fond, avec nouvelles tentatives.
       SERVICES_COMPTE_SUPPRIME_URLS: http://room-service:3003,http://message-service:3004,http://user-config-service:3005
+      # Sessions d'un compte invalidées (mot de passe changé, déconnexion de
+      # tous ou des autres appareils, rôle changé, compte supprimé) :
+      # Message-Service ferme aussitôt les sockets au jeton révoqué.
+      SERVICES_SESSIONS_REVOQUEES_URLS: http://message-service:3004
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-chatvardage_internal_dev}
 
     volumes:

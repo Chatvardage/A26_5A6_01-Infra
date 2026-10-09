@@ -14,6 +14,7 @@ Le Serveur-API conserve les contrats des microservices. Il ne renomme pas les ch
 | PATCH | `/api/auth/me` | Bearer JWT, rate-limit Gateway |
 | DELETE | `/api/auth/me` | Bearer JWT, rate-limit Gateway |
 | POST | `/api/auth/logout-all` | Bearer JWT (invalide tous les jetons du compte) |
+| POST | `/api/auth/logout-others` | Bearer JWT (invalide tous les jetons du compte, renvoie une nouvelle session à l'appareil courant) |
 | GET | `/api/users/lookup?ids=<id>,<id>` | Bearer JWT (tout utilisateur) ; `{id, pseudo}` seulement, 100 ids max |
 | GET | `/api/users/search?q=<début de pseudo>&limit=<1-50>` | Bearer JWT (tout utilisateur) ; `{id, pseudo}` seulement |
 | GET | `/api/users` | admin |
