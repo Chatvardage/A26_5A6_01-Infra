@@ -297,7 +297,13 @@ session** est ouverte pour l'appareil qui le demande, qui reste connecté.
 
 Sans corps. **Réponse `200`** : `{ jeton, refresh_token, utilisateur }`
 (même forme que `login`) ; le client remplace sa session par celle-ci.
-**Erreurs** : `401` (jeton manquant, invalide ou déjà invalidé).
+**Erreurs** : `401` (jeton manquant, invalide ou déjà invalidé). `500` si le stockage ou l’ouverture de la nouvelle session échoue.
+
+La notification de révocation est émise immédiatement après l’invalidation
+réussie, avant la relecture du compte et l’ouverture de la nouvelle session.
+Une erreur ultérieure (401 ou 500) ne restaure pas les anciens jetons et
+n’empêche pas cette notification. Si l’invalidation elle-même échoue ou ne
+trouve plus le compte, aucune notification de cette mutation n’est émise.
 
 Même prévention de Message-Service après un changement de mot de passe
 (`PATCH /api/auth/me`), un changement de rôle et une suppression de compte :
