@@ -140,3 +140,9 @@ Validation de cette review : Compose, syntaxe shell, ShellCheck, 73 tests Infra,
 - Les migrations en images finales invoquent directement `node node_modules/prisma/build/index.js migrate deploy`; `npx prisma ...` reste utilisable dans les environnements de développement/build, mais npm/npx sont absents au runtime.
 - PostgreSQL et Redis restent sur leurs versions majeures actuelles; les Dockerfiles Infra appliquent les correctifs Alpine disponibles. Adminer est passé à 6.1.1. Contrôler les images après `build --pull`, sans masquer les alertes sans correctif.
 - `docker compose up --wait` et `scripts/healthcheck.sh` sont obligatoires après modification d'orchestration. Voir `docs/audit-securite-2026-10-09.md` pour les essais sur stack isolée et les limites de production.
+
+### Review 6084732591 — erreurs de logout-others
+
+- Le contrat précise le 401 post-invalidation si le compte disparaît entre mutation et relecture, ainsi que la reconnexion classique possible après 500 lorsque le compte et le stockage sont disponibles.
+- Supprimer tout 401 ultérieur est écarté : AuthService::deconnecter_autres appelle trouver_par_id après invalider_sessions et renvoie NonAutorise si le compte n’est plus trouvé. Le 401 n’est donc pas uniquement une précondition.
+- Aucun séparateur supplémentaire : la phrase générale de révocation appartient déjà à la section logout-others et en est séparée par une ligne vide; son contenu reste correct.
