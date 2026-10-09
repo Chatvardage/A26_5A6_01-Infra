@@ -164,6 +164,7 @@ Un message est **non lu** s'il a été écrit par quelqu'un d'autre après le de
 | Méthode | Route | Effet |
 |---|---|---|
 | GET | `/api/messages/unread` | `{ "counts": { "dm:<id>": 2, "room:<id>": 5 } }` pour les DM et les salons lisibles ; seules les conversations avec des non-lus sont présentes. 503 si Room-Service ne répond pas |
+| GET | `/api/messages/activity` | `{ "rooms": { "room:<id>": "<date du dernier message>" } }` pour les salons lisibles (une requête groupée) ; les salons sans message sont absents. Sert à trier les serveurs du plus actif au moins actif. 503 si Room-Service ne répond pas |
 | PUT | `/api/messages/conversations/:otherUserId/read` | Marque le DM comme lu |
 | PUT | `/api/messages/rooms/:roomId/read` | Marque le salon comme lu ; 403 sans droit de lecture, 404 salon inconnu |
 
@@ -352,6 +353,7 @@ messages dont le contexte n'existe plus :
 | Méthode | Route | Appelée par | Effet |
 |---|---|---|---|
 | POST | `/api/internal/salons-supprimes` `{ salonIds }` (500 au plus) | Room-Service, après la suppression d'un salon ou d'un serveur | Messages et états de lecture de ces salons. Réponse `{ messagesSalons }` |
+| POST | `/api/internal/users/:userId/sessions-revoquees` | Authentification, après un changement de mot de passe, une déconnexion (tous ou autres appareils), un changement de rôle ou une suppression de compte | Publie `sessions.revoquees` : chaque instance revérifie sans cache les sockets de ce compte et ferme (après `session.revoquee`) ceux dont le jeton est révoqué. Réponse `202 { accepte: true }` |
 | DELETE | `/api/internal/users/:userId` | Authentification, après la suppression d'un compte | Ses conversations privées (dans les deux sens), les messages de salon qu'il a écrits, ses états de lecture et ceux des autres sur leurs DM avec lui. Réponse `{ messagesPrives, messagesSalons }` |
 
 Aucun événement temps réel n'est émis : les clients ouverts voient les

@@ -14,6 +14,7 @@ Le Serveur-API conserve les contrats des microservices. Il ne renomme pas les ch
 | PATCH | `/api/auth/me` | Bearer JWT, rate-limit Gateway |
 | DELETE | `/api/auth/me` | Bearer JWT, rate-limit Gateway |
 | POST | `/api/auth/logout-all` | Bearer JWT (invalide tous les jetons du compte) |
+| POST | `/api/auth/logout-others` | Bearer JWT (invalide tous les jetons du compte, renvoie une nouvelle session à l'appareil courant) |
 | GET | `/api/users/lookup?ids=<id>,<id>` | Bearer JWT (tout utilisateur) ; `{id, pseudo}` seulement, 100 ids max |
 | GET | `/api/users/search?q=<début de pseudo>&limit=<1-50>` | Bearer JWT (tout utilisateur) ; `{id, pseudo}` seulement |
 | GET | `/api/users` | admin |
@@ -30,7 +31,7 @@ Toutes ces routes exigent un Bearer JWT, validé par Room-Service auprès d'Auth
 | Méthode | Route Gateway | Droits |
 |---|---|---|
 | GET | `/api/servers` | mes serveurs (ajoute l'appelant au serveur par défaut) |
-| GET | `/api/servers/decouvrir?q=<nom>` | serveurs publics dont je ne suis pas membre |
+| GET | `/api/servers/decouvrir?q=<nom>&decalage=&limite=` | serveurs publics dont je ne suis pas membre, par pages (`{ serveurs, total, suivant }`, 10 par défaut, 100 au plus, les plus fréquentés d'abord) |
 | GET | `/api/servers/invitations/me` | mes invitations |
 | POST | `/api/servers` | tout utilisateur (devient propriétaire) |
 | GET | `/api/servers/:id` | membre ; aperçu si public et non-membre (sans liste des membres) |
@@ -39,7 +40,7 @@ Toutes ces routes exigent un Bearer JWT, validé par Room-Service auprès d'Auth
 | DELETE | `/api/servers/:id` | propriétaire ou admin (pas le serveur par défaut) |
 | POST | `/api/servers/:id/join` | serveur public, ou privé sur invitation |
 | POST | `/api/servers/:id/leave` | membre (ni le propriétaire, ni le serveur par défaut) |
-| DELETE | `/api/servers/:id/members/:userId` | modérateur minimum, au-dessus de la cible |
+| DELETE | `/api/servers/:id/members/:userId?nouveauProprietaire=<userId>` | modérateur minimum, au-dessus de la cible ; propriétaire : admin seulement, avec un membre successeur |
 | PATCH | `/api/servers/:id/members/:userId` | propriétaire ou admin (nommer/retirer un modérateur) |
 | POST | `/api/servers/:id/invitations` | modérateur minimum (pas le serveur par défaut) |
 | POST | `/api/servers/:id/invitations/accept` | invité |
@@ -83,6 +84,8 @@ Non-lus et recherche (DM et salons lisibles uniquement) :
 | Méthode | Route Gateway |
 |---|---|
 | GET | `/api/messages/unread` |
+| GET | `/api/messages/activity` |
+| GET | `/api/messages/search/summary?q=<texte>` (comptes complets par personne, serveur et salon lisible; [contrat](recherche-resume.md)) |
 | GET | `/api/messages/conversations/:otherUserId/read-state` |
 | GET | `/api/messages/rooms/:roomId/read-states` |
 | GET | `/api/messages/search?q=<texte>&limit=20&cursor=<nextCursor>&conversationId=<dm:… \| room:…>` (`conversationId` facultatif : une seule conversation) |

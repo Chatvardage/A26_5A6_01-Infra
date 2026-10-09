@@ -52,15 +52,16 @@ pour le détail par service.
 | POST | `/api/auth/register` | `{ pseudo, courriel, mot_de_passe }` → `{ jeton, utilisateur }` |
 | GET/PATCH/DELETE | `/api/auth/me` | Profil courant (lecture/modification/suppression du compte) |
 | POST | `/api/auth/logout-all` | « Se déconnecter partout » (page profil) : invalide tous les jetons du compte |
+| POST | `/api/auth/logout-others` | « Déconnecter les autres appareils » (page profil) : nouvelle session pour cet appareil, les autres sont déconnectés |
 | GET | `/api/users/lookup?ids=` | Résolution de pseudo pour d'autres utilisateurs (id → pseudo uniquement) |
 | GET | `/api/users/search?q=` | Recherche par début de pseudo (nouveau DM, invitation) |
 | GET/POST | `/api/servers` | Mes serveurs (sans la liste des membres) / créer un serveur |
-| GET | `/api/servers/decouvrir?q=`, `/api/servers/invitations/me` | Serveurs publics à rejoindre, mes invitations |
+| GET | `/api/servers/decouvrir?q=&decalage=&limite=`, `/api/servers/invitations/me` | Serveurs publics à rejoindre (par pages de 10, les plus fréquentés d'abord : `{ serveurs, total, suivant }`), mes invitations |
 | PATCH/DELETE | `/api/servers/:id` | Modifier (nom, icône, visibilité) / supprimer |
 | POST | `/api/servers/:id/join`, `/leave` | Rejoindre / quitter un serveur |
 | GET | `/api/servers/:id/members?decalage=&limite=` | Membres par pages (panneau des membres) |
 | GET | `/api/servers/:id/members?ids=` | Lesquels sont déjà membres (fenêtre « Inviter ») |
-| PATCH/DELETE | `/api/servers/:id/members/:userId` | Changer le rôle / expulser |
+| PATCH/DELETE | `/api/servers/:id/members/:userId` | Changer le rôle / expulser (`?nouveauProprietaire=<userId>` obligatoire pour expulser le propriétaire) |
 | POST | `/api/servers/:id/invitations`, `/invitations/accept`, `/invitations/refuse` | Invitations |
 | POST/PATCH/DELETE | `/api/servers/:id/channels`, `/api/channels/:id` | Créer / modifier / supprimer un salon |
 | POST/GET | `/api/messages/rooms/:roomId`, `/history` | Messages de salon |
@@ -68,6 +69,7 @@ pour le détail par service.
 | POST/GET | `/api/messages`, `/api/messages/history/:otherUserId` | Messages privés (DM) |
 | GET | `/api/messages/conversations` | Liste des conversations privées |
 | GET | `/api/messages/unread` | Compteurs de messages non lus (salons et DM) |
+| GET | `/api/messages/activity` | Date du dernier message de chaque salon lisible (tri des serveurs par activité) |
 | PUT | `/api/messages/rooms/:roomId/read`, `/api/messages/conversations/:otherUserId/read` | Marquer une conversation comme lue (conversation affichée, fenêtre au premier plan) |
 | GET | `/api/messages/conversations/:otherUserId/read-state`, `/api/messages/rooms/:roomId/read-states` | Accusés de lecture : ✓✓ des messages privés, « Vu par » des salons |
 | GET | `/api/messages/search?q=&limit=20&cursor=&conversationId=` | Recherche dans la conversation affichée (`room:<salon>` ou `dm:<interlocuteur>`) |

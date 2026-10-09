@@ -75,9 +75,9 @@ done
 fi
 
 echo "== Redis =="
-# Charge le mot de passe généré dans /infra/.env à l'intérieur du conteneur.
+# Charge le mot de passe généré dans /run/chatvardage/.env à l'intérieur du conteneur.
 if ! redis_reply=$(docker compose exec -T redis sh -c \
-  'set -a; . /infra/.env; set +a; REDISCLI_AUTH="$REDIS_PASSWORD" redis-cli ping'); then
+  'set -a; . /run/chatvardage/.env; set +a; REDISCLI_AUTH="$REDIS_PASSWORD" redis-cli ping'); then
   echo "Impossible d'interroger Redis." >&2
   exit 1
 fi

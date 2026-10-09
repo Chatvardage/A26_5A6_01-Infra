@@ -8,6 +8,9 @@ services:
     image: alpine:3.22
     container_name: chatvardage-generer-env
     working_dir: /infra
+    environment:
+      LOCAL_UID: ${LOCAL_UID:-1000}
+      LOCAL_GID: ${LOCAL_GID:-1000}
     volumes:
       - ./:/infra
     command:
@@ -18,14 +21,17 @@ services:
         if [ -f /infra/.env ]; then
           echo 'OK: .env existe déjà; secrets conservés.';
         else
-          /bin/sh /infra/scripts/generer-env.sh &&
-          chmod 644 /infra/.env;
-        fi
+          /bin/sh /infra/scripts/generer-env.sh;
+        fi &&
+        /bin/sh /infra/scripts/preparer-env-services.sh
     restart: "no"
 
   postgres:
     entrypoint: ["/bin/sh", "/infra/scripts/docker-entrypoint-env.sh", "postgres"]
-    image: postgres:17-alpine
+    image: chatvardage-postgres:17
+    build:
+      context: .
+      dockerfile: docker/postgres.Dockerfile
     container_name: chatvardage-postgres
     restart: unless-stopped
 
@@ -57,13 +63,14 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./postgres/init:/docker-entrypoint-initdb.d:ro
-      - ./:/infra:ro
+      - ./.runtime-env/postgres:/run/chatvardage:ro
+      - ./scripts/docker-entrypoint-env.sh:/infra/scripts/docker-entrypoint-env.sh:ro
 
     healthcheck:
       test:
         [
           "CMD-SHELL",
-          'set -a; . /infra/.env; set +a; pg_isready -U "$$POSTGRES_SUPERUSER" -d postgres'
+          'set -a; . /run/chatvardage/.env; set +a; pg_isready -U "$$POSTGRES_SUPERUSER" -d postgres'
         ]
       interval: 5s
       timeout: 5s
@@ -81,7 +88,10 @@ services:
   # Pas de profil Compose : toute la stack est un environnement de dev lié à 127.0.0.1
   # (voir docs/architecture.md, « Choix d'orchestration »).
   adminer:
-    image: adminer:4.8.1
+    image: chatvardage-adminer:6.1.1
+    build:
+      context: .
+      dockerfile: docker/adminer.Dockerfile
     container_name: chatvardage-adminer
     restart: unless-stopped
 
@@ -97,7 +107,10 @@ services:
 
   redis:
     entrypoint: ["/bin/sh", "/infra/scripts/docker-entrypoint-env.sh", "redis"]
-    image: redis:7.4-alpine
+    image: chatvardage-redis:7.4
+    build:
+      context: .
+      dockerfile: docker/redis.Dockerfile
     container_name: chatvardage-redis
     restart: unless-stopped
 
@@ -112,13 +125,14 @@ services:
 
     volumes:
       - redis_data:/data
-      - ./:/infra:ro
+      - ./.runtime-env/redis:/run/chatvardage:ro
+      - ./scripts/docker-entrypoint-env.sh:/infra/scripts/docker-entrypoint-env.sh:ro
 
     healthcheck:
       test:
         [
           "CMD-SHELL",
-          'set -a; . /infra/.env; set +a; REDISCLI_AUTH="$$REDIS_PASSWORD" redis-cli ping | grep -q PONG'
+          'set -a; . /run/chatvardage/.env; set +a; REDISCLI_AUTH="$$REDIS_PASSWORD" redis-cli ping | grep -q PONG'
         ]
       interval: 5s
       timeout: 3s
@@ -157,10 +171,15 @@ services:
       # (DELETE /api/internal/users/:id). Pas de depends_on : l'appel est
       # fait en tâche de fond, avec nouvelles tentatives.
       SERVICES_COMPTE_SUPPRIME_URLS: http://room-service:3003,http://message-service:3004,http://user-config-service:3005
+      # Sessions d'un compte invalidées (mot de passe changé, déconnexion de
+      # tous ou des autres appareils, rôle changé, compte supprimé) :
+      # Message-Service ferme aussitôt les sockets au jeton révoqué.
+      SERVICES_SESSIONS_REVOQUEES_URLS: http://message-service:3004
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-chatvardage_internal_dev}
 
     volumes:
-      - ./:/infra:ro
+      - ./.runtime-env/auth:/run/chatvardage:ro
+      - ./scripts/docker-entrypoint-env.sh:/infra/scripts/docker-entrypoint-env.sh:ro
 
     ports:
       - "127.0.0.1:3001:3001"
@@ -176,7 +195,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          "curl -fs http://localhost:3001/health || exit 1"
+          "node -e \"fetch('http://localhost:3001/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))\""
         ]
       interval: 5s
       timeout: 3s
@@ -216,7 +235,8 @@ services:
       MESSAGE_SERVICE_URL: http://message-service:3004
 
     volumes:
-      - ./:/infra:ro
+      - ./.runtime-env/room:/run/chatvardage:ro
+      - ./scripts/docker-entrypoint-env.sh:/infra/scripts/docker-entrypoint-env.sh:ro
 
     ports:
       - "127.0.0.1:3003:3003"
@@ -272,7 +292,8 @@ services:
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-chatvardage_internal_dev}
 
     volumes:
-      - ./:/infra:ro
+      - ./.runtime-env/message:/run/chatvardage:ro
+      - ./scripts/docker-entrypoint-env.sh:/infra/scripts/docker-entrypoint-env.sh:ro
 
     ports:
       - "127.0.0.1:3004:3004"
@@ -325,7 +346,8 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
 
     volumes:
-      - ./:/infra:ro
+      - ./.runtime-env/user-config:/run/chatvardage:ro
+      - ./scripts/docker-entrypoint-env.sh:/infra/scripts/docker-entrypoint-env.sh:ro
 
     ports:
       - "127.0.0.1:3005:3005"
@@ -363,14 +385,15 @@ services:
     environment:
       NODE_ENV: ${NODE_ENV:-development}
       PORT: 3000
-      # COOKIE_SECRET et SESSION_SECRET sont chargés depuis /infra/.env par
+      # COOKIE_SECRET et SESSION_SECRET sont chargés depuis /run/chatvardage/.env par
       # scripts/docker-entrypoint-env.sh après le bootstrap generer-env.
       AUTH_SERVICE_URL: http://auth-service:3001
       ROOM_SERVICE_URL: http://room-service:3003
       MESSAGE_SERVICE_URL: http://message-service:3004
 
     volumes:
-      - ./:/infra:ro
+      - ./.runtime-env/dashboard:/run/chatvardage:ro
+      - ./scripts/docker-entrypoint-env.sh:/infra/scripts/docker-entrypoint-env.sh:ro
 
     ports:
       - "127.0.0.1:3002:3000"
@@ -409,6 +432,7 @@ services:
     restart: unless-stopped
 
     environment:
+      NODE_ENV: ${NODE_ENV:-development}
       PORT: 3000
       AUTH_SERVICE_URL: http://auth-service:3001
       ROOM_SERVICE_URL: http://room-service:3003
@@ -425,10 +449,11 @@ services:
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-chatvardage_internal_dev}
 
     volumes:
-      - ./:/infra:ro
+      - ./.runtime-env/serveur-api:/run/chatvardage:ro
+      - ./scripts/docker-entrypoint-env.sh:/infra/scripts/docker-entrypoint-env.sh:ro
 
     ports:
-      - "0.0.0.0:3000:3000"
+      - "${API_BIND_ADDRESS:-127.0.0.1}:3000:3000"
 
     healthcheck:
       test:

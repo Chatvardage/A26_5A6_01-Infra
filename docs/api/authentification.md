@@ -86,7 +86,7 @@ dégrade silencieusement ce contrat.
 | 409  | Conflit (pseudo ou courriel déjà utilisé) |
 | 413  | Corps de la requête trop volumineux (plus de 16 Kio, voir `interface::http::routes`) |
 | 500  | Erreur interne du serveur |
-| 503  | Base de données indisponible (`GET /health`) |
+| 503  | Base de données indisponible (`GET /health`) ou calculs Argon2 saturés (attente de cinq secondes dépassée) |
 
 ---
 
@@ -280,11 +280,28 @@ ce compte, sur tous les appareils, celui de la requête compris
 (`version_auth` incrémentée, comme lors d'un changement de mot de passe).
 Il faut ensuite se reconnecter. Les autres services s'en aperçoivent au
 plus tard après leur cache de validation (`AUTH_CACHE_TTL_MS`, 10 s par
-défaut) ; les sockets ouverts de Message-Service sont fermés à leur
-revalidation suivante (60 s au plus).
+défaut). Authentification prévient Message-Service
+(`SERVICES_SESSIONS_REVOQUEES_URLS`), qui ferme aussitôt les sockets
+ouverts : chaque appareil reçoit `session.revoquee` et se déconnecte.
 
 Sans corps. **Réponse `204`**. **Erreurs** : `401` (jeton manquant,
 invalide ou déjà invalidé).
+
+---
+
+### POST /api/auth/logout-others 🔒
+
+« Déconnecter les autres appareils » : comme `logout-all` (tous les jetons
+et refresh tokens invalidés, Message-Service prévenu), puis une **nouvelle
+session** est ouverte pour l'appareil qui le demande, qui reste connecté.
+
+Sans corps. **Réponse `200`** : `{ jeton, refresh_token, utilisateur }`
+(même forme que `login`) ; le client remplace sa session par celle-ci.
+**Erreurs** : `401` (jeton manquant, invalide ou déjà invalidé).
+
+Même prévention de Message-Service après un changement de mot de passe
+(`PATCH /api/auth/me`), un changement de rôle et une suppression de compte :
+les autres appareils sont déconnectés tout de suite.
 
 ---
 
@@ -535,3 +552,5 @@ Les lignes consommées restent jusqu'à l'expiration de leur famille pour permet
 logout après une rotation concurrente. L'exploitation peut programmer une purge
 `DELETE FROM sessions_refresh WHERE expire_le < now()`; le service n'exécute pas
 automatiquement cette purge.
+
+Les calculs Argon2 sont limités à quatre en parallèle par instance, y compris après la déconnexion du client; la limite par IP reste appliquée au Gateway.
