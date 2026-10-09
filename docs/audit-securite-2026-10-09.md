@@ -52,7 +52,7 @@ Exceptions restantes :
 
 | Service/image | Critiques | Élevées | Modérées | Remarque |
 |---|---:|---:|---:|---|
-| Auth | 0 | 43 | 58 | Alertes Debian Trixie sans version corrigée disponible dans le scan; détail par paquet/CVE dans le JSON. |
+| Auth (bilan initial; voir actualisation en fin de document) | 0 | 43 | 58 | Alertes Debian Trixie sans version corrigée disponible dans le scan; détail par paquet/CVE dans le JSON. |
 | PostgreSQL | 1 | 21 | 22 | Alertes Go du binaire gosu; aucune alerte élevée/critique Alpine restante. |
 | Redis | 0 | 0 | 0 | Image corrigée. |
 | Adminer | 0 | 0 | 0 | Ancienne image : 78 critiques et 274 élevées; nouvelle image corrigée. |
@@ -92,4 +92,4 @@ Les bases et méthodes de Scout et Trivy diffèrent : leurs totaux ne doivent pa
 
 Rescan comparable : Trivy 0.75.0, image Auth Alpine du commit c518bb0, base de vulnérabilités actualisée le 9 octobre 2026 : 0 critiques, 0 élevées, 0 modérées, 0 faibles, 0 inconnues. Aucun filtre de sévérité ni de correctif. Ce résultat complète le tableau historique sans modifier les anciens constats.
 
-La commande directe Prisma du bilan initial décrit les images de ce premier scan; Auth utilise maintenant le point d’entrée déclaré .bin/prisma, conformément au guide actualisé. La couverture 99,75 % était déjà constatée avant c518bb0 : les valeurs 99,77 et 99,75 proviennent de deux validations successives, pas d’une régression de cette projection.
+La commande directe Prisma du bilan initial décrit les images de ce premier scan; Auth utilise maintenant le point d’entrée déclaré `./node_modules/.bin/prisma`, conformément au guide actualisé. La couverture 99,75 % était déjà constatée avant c518bb0 : les valeurs 99,77 et 99,75 proviennent de deux validations successives, pas d’une régression de cette projection.

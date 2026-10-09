@@ -137,7 +137,7 @@ Validation de cette review : Compose, syntaxe shell, ShellCheck, 73 tests Infra,
 
 - Les services runtime ne doivent plus monter tout le dépôt Infra : monter leur seul `.runtime-env/<service>` en lecture seule et le script d'entrée séparément. Le bootstrap est le seul service qui voit le `.env` principal.
 - Après les scripts de génération, exécuter `preparer-env-services.sh` sans régénérer les secrets existants; fournir `LOCAL_UID`/`LOCAL_GID` si l'opérateur n'utilise pas 1000:1000.
-- Les migrations en images finales utilisent le CLI Prisma installé localement sans téléchargement. Auth invoque désormais `./node_modules/.bin/prisma migrate deploy`, point d’entrée déclaré par le paquet et vérifié au build; les services utilisant `node node_modules/prisma/build/index.js migrate deploy` invoquent actuellement sa même cible interne. `npx prisma ...` reste utilisable dans les environnements de développement/build, mais npm/npx sont absents au runtime.
+- Les migrations en images finales utilisent le CLI Prisma installé localement sans téléchargement. Auth invoque désormais `./node_modules/.bin/prisma migrate deploy`, point d’entrée déclaré par le paquet et vérifié au build; les services utilisant `node node_modules/prisma/build/index.js migrate deploy` invoquent sa même cible interne dans la version Prisma verrouillée. `npx prisma ...` reste utilisable dans les environnements de développement/build, mais npm/npx sont absents au runtime.
 - PostgreSQL et Redis restent sur leurs versions majeures actuelles; les Dockerfiles Infra appliquent les correctifs Alpine disponibles. Adminer est passé à 6.1.1. Contrôler les images après `build --pull`, sans masquer les alertes sans correctif.
 - `docker compose up --wait` et `scripts/healthcheck.sh` sont obligatoires après modification d'orchestration. Voir `docs/audit-securite-2026-10-09.md` pour les essais sur stack isolée et les limites de production.
 
@@ -147,3 +147,10 @@ Validation de cette review : Compose, syntaxe shell, ShellCheck, 73 tests Infra,
 - La couverture 99,75 % est le résultat courant déjà mesuré avant cette projection publique; le seuil 99 % et les scénarios de sécurité PostgreSQL restent validés. Aucun test artificiel n’est ajouté pour masquer 0,02 point de différence.
 - Les scans Scout et Trivy sont présentés avec leur outil/date respectifs, sans prétendre que leurs totaux constituent une comparaison directe. Le tableau initial reste explicitement historique.
 - La construction Docker du CI est bien ajoutée dans le workflow Auth de c518bb0; elle n’appartient pas au dépôt Infra et n’est donc pas dupliquée ici.
+
+### Review 6084551158 — repères du bilan
+
+- La ligne historique du tableau Auth renvoie directement au rescan Alpine; le chemin opérationnel Prisma est écrit en entier et la cible interne est qualifiée par la version verrouillée.
+- Le tableau multi-stage distingue déjà generate pendant la construction et migrate au démarrage; aucun changement de commande ni suppression de npx au build.
+- Scinder les phrases de couverture et supprimer les rappels serait éditorial : ils permettent de lire indépendamment le guide, le bilan et les règles. Les valeurs sont cohérentes et le seuil inchangé.
+- Le rescan est déjà exigé avant déploiement (condition 4) et après reconstruction avec --pull; aucune cadence inventée sans service de déploiement configuré.
