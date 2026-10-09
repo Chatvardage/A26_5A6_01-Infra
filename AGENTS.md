@@ -111,3 +111,11 @@ Infra est la référence du démarrage complet, des architectures, contrats et s
 - Sections temps réel dupliquées : conservées; consolidation documentaire facultative, sans bug de contrat identifié.
 
 Validation : docker compose config, vérification des fichiers partagés et healthcheck de la stack passent. Le changement est uniquement documentaire : pas de down -v ni de reconstruction de la stack, pour préserver les données locales; aucune initialisation SQL ni migration n'a changé.
+
+## Sécurité et images — 9 octobre 2026
+
+- Les services runtime ne doivent plus monter tout le dépôt Infra : monter leur seul `.runtime-env/<service>` en lecture seule et le script d'entrée séparément. Le bootstrap est le seul service qui voit le `.env` principal.
+- Après les scripts de génération, exécuter `preparer-env-services.sh` sans régénérer les secrets existants; fournir `LOCAL_UID`/`LOCAL_GID` si l'opérateur n'utilise pas 1000:1000.
+- Les migrations en images finales invoquent directement `node node_modules/prisma/build/index.js migrate deploy`; `npx prisma ...` reste utilisable dans les environnements de développement/build, mais npm/npx sont absents au runtime.
+- PostgreSQL et Redis restent sur leurs versions majeures actuelles; les Dockerfiles Infra appliquent les correctifs Alpine disponibles. Adminer est passé à 6.1.1. Contrôler les images après `build --pull`, sans masquer les alertes sans correctif.
+- `docker compose up --wait` et `scripts/healthcheck.sh` sont obligatoires après modification d'orchestration. Voir `docs/audit-securite-2026-10-09.md` pour les essais sur stack isolée et les limites de production.

@@ -23,7 +23,7 @@ done
 cd A26_5A6_01-Infra
 ```
 
-Aucun `.env` à préparer : au premier `docker compose up`, le service `generer-env` (conteneur Alpine) exécute `scripts/generer-env.sh`. Il crée `.env` à partir de `.env.example` avec dix secrets aléatoires distincts (PostgreSQL, Redis, JWT, jeton interne, Dashboard). Les autres services attendent cette étape, puis chargent ce fichier au démarrage. Un `.env` existant est conservé : les secrets restent stables d’un démarrage à l’autre.
+Aucun `.env` à préparer : au premier `docker compose up`, le service `generer-env` (conteneur Alpine) exécute `scripts/generer-env.sh`. Il crée `.env` à partir de `.env.example` avec dix secrets aléatoires distincts (PostgreSQL, Redis, JWT, jeton interne, Dashboard). `preparer-env-services.sh` prépare ensuite `.runtime-env/<service>/.env` avec les seules variables autorisées pour chaque conteneur. Le fichier principal reste privé (0600), le dossier `.runtime-env` aussi (0700); aucun service applicatif ne monte le dossier Infra complet. Un `.env` existant est conservé : les secrets restent stables d’un démarrage à l’autre. `LOCAL_UID`/`LOCAL_GID` valent 1000 par défaut : adapter ces valeurs à l'opérateur Linux si nécessaire.
 
 Pour régénérer les secrets : `./scripts/generer-env.sh --force` (ou `.\scripts\generer-env.ps1 -Force` en PowerShell). PostgreSQL et Redis gardent alors les anciens identifiants dans leurs volumes : réinitialiser les volumes (`docker compose down -v`, qui efface les données) avant de redémarrer. Le `.env` généré ne doit jamais être commité. Ce Compose sert au développement local; ce n’est pas un déploiement de production.
 
@@ -240,3 +240,24 @@ Architecture multiservice : Electron passe par un Gateway unique (Serveur-API), 
 ## CI Infra
 
 Le CI valide Compose avec un secret de session temporaire, vérifie les scripts avec ShellCheck et compare les fichiers partagés entre services, ainsi que les hooks communs au client mobile et au client Web (`src/partage/` des dépôts Mobile et Frontend). Pour les dépôts privés, la comparaison requiert `CHATVARDAGE_REPOS_TOKEN` (lecture des contenus uniquement); sans ce secret, elle est signalée comme sautée. Les contrôles de chaque service restent dans leurs dépôts.
+
+## Audit sécurité du 9 octobre 2026
+
+Le [rapport détaillé](docs/audit-securite-2026-10-09.md) décrit les corrections, les résultats et les alertes résiduelles. Cette stack est une configuration de développement : le serveur de production, son reverse proxy et son HTTPS restent à définir et à auditer.
+
+`preparer-env-services.sh` dérive les seuls paramètres nécessaires à chaque service depuis le `.env` existant. Le dossier `.runtime-env` et le `.env` principal sont privés sur l'hôte; chaque conteneur voit seulement son sous-dossier en lecture seule. Si votre UID/GID Linux diffère de 1000, renseigner `LOCAL_UID` et `LOCAL_GID` avant le bootstrap. Ne pas régénérer les secrets d'une base existante.
+
+PostgreSQL 17, Redis 7.4 et Adminer 6.1.1 ont désormais des images locales construites depuis les images officielles et mises à jour avec `apk upgrade`. Utiliser `build --pull` pour reprendre les correctifs disponibles. Les images des services conservent les migrations Prisma au démarrage, avec le CLI local directement exécuté par Node (npm/npx supprimés au runtime). Auth utilise Debian Trixie pour son runtime; le compilateur Rust reste sur Bookworm.
+
+### Rebuild et remise en service sans supprimer les données
+
+Depuis ce dépôt, les neuf conteneurs ci-dessous sont concernés par les changements. La commande respecte les dépendances et attend leur santé; une brève interruption est attendue pendant la recréation de PostgreSQL/Redis. Les volumes nommés et les secrets existants sont conservés.
+
+```sh
+docker compose run --rm --no-deps generer-env
+docker compose build --pull postgres redis auth-service room-service message-service user-config-service dashboard serveur-api adminer
+docker compose up -d --no-build --force-recreate --wait --wait-timeout 240 postgres redis auth-service room-service message-service user-config-service dashboard serveur-api adminer
+./scripts/healthcheck.sh
+```
+
+Le Gateway est lié à `127.0.0.1` par défaut. Pour un téléphone sur le réseau local de développement, une ouverture explicite via `API_BIND_ADDRESS` est nécessaire; en production, publier seulement le reverse proxy HTTPS et filtrer les ports internes et les outils d'administration.

@@ -86,7 +86,7 @@ dégrade silencieusement ce contrat.
 | 409  | Conflit (pseudo ou courriel déjà utilisé) |
 | 413  | Corps de la requête trop volumineux (plus de 16 Kio, voir `interface::http::routes`) |
 | 500  | Erreur interne du serveur |
-| 503  | Base de données indisponible (`GET /health`) |
+| 503  | Base de données indisponible (`GET /health`) ou calculs Argon2 saturés (attente de cinq secondes dépassée) |
 
 ---
 
@@ -552,3 +552,5 @@ Les lignes consommées restent jusqu'à l'expiration de leur famille pour permet
 logout après une rotation concurrente. L'exploitation peut programmer une purge
 `DELETE FROM sessions_refresh WHERE expire_le < now()`; le service n'exécute pas
 automatiquement cette purge.
+
+Les calculs Argon2 sont limités à quatre en parallèle par instance, y compris après la déconnexion du client; la limite par IP reste appliquée au Gateway.
