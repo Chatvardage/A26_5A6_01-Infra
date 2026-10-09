@@ -83,3 +83,7 @@ Les essais utilisent le projet Docker `chatvardage-security-review` avec volumes
 ## Remise en service ciblée
 
 Depuis Infra, utiliser les commandes documentées dans le README : bootstrap des fichiers dérivés, build --pull des neuf services affectés, up --wait en respectant les dépendances puis healthcheck. Aucun down ni retrait des volumes n'est requis. Les clients Electron/Mobile doivent être reconstruits et distribués séparément avec leur configuration HTTPS définitive.
+
+## Actualisation Auth — review 6078856455
+
+La ligne Auth/Trivy ci-dessus est le résultat historique de l’image Debian. La nouvelle image de la PR Auth #10 compile avec musl et utilise Node 22 Alpine mis à jour. Docker Scout, sans filtre de sévérité, de correctif ou d’image de base, y indexe 64 paquets et ne détecte aucune vulnérabilité le 9 octobre 2026. Les migrations réelles, la santé, le refus sans JWT et l’exécution sans root ont été vérifiés sur un conteneur temporaire et une base de test isolée; aucun volume applicatif n’a été supprimé. L’image en cours d’exploitation n’est pas remplacée par ces essais. Les autres lignes et limites de déploiement restent des résultats historiques à revérifier.
