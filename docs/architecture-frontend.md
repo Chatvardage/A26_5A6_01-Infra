@@ -169,7 +169,9 @@ src/
       theme-browser.js       window.ThemeManager (data-theme sur <html>)
       chat-ui-shared.js      window.ChatUiShared : réseau, présence,
                              avatars, actions de message, rôles,
-                             dialogue de recherche de messages
+                             dialogue de recherche de messages, fiche de
+                             profil (ouvrirFicheProfil,
+                             rendreAvatarCliquable)
       notif-prefs.js         window.NotifPrefs : compteurs de non-lus
                              (copie de l'état de Message-Service), mode
                              de notif.
@@ -264,6 +266,19 @@ zéro ; sans conversation affichée, le champ est désactivé. Un clic sur un
 résultat charge l'historique plus ancien jusqu'au message (pages de 100,
 20 au plus, sans trou), fait défiler jusqu'à lui et le met en évidence
 quelques secondes (`ChatUiShared.allerAuMessageAffiche`).
+
+**Fiche de profil.** Un clic (ou Entrée/Espace) sur la photo d'un autre
+utilisateur ouvre sa fiche (`ChatUiShared.ouvrirFicheProfil`, contenu calculé
+par `LogiqueInterface.ficheProfil`) : photo ou initiale, nom affiché (alias,
+sinon pseudo), `@pseudo`, présence, et un bouton « Message privé ». Photos
+concernées : auteurs des messages d'un salon, liste des membres d'un serveur,
+liste des messages privés, barre du haut et messages d'une conversation privée.
+Pas de bouton sur sa propre fiche ni vers la conversation privée déjà affichée.
+Depuis la page des salons, le bouton crée la conversation
+(`demarrerConversationPrivee`) puis navigue vers `message-prive.html` avec la
+cible `{ type: 'prive' }` ; depuis la page des messages privés, il l'ouvre sur
+place. Le dialogue est créé à la demande et retiré à sa fermeture : il
+s'ouvre aussi par-dessus le dialogue des membres.
 
 **Temps réel sans rechargement.** Un message reçu, modifié ou supprimé (salon
 ou privé) est appliqué à l'état déjà affiché ; les listes ne défilent vers
