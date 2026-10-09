@@ -69,7 +69,7 @@ et [Installation et lancement](#installation-et-lancement)).
 | **Port** (`UtilisateurRepositoryPort`) | Le code métier ne dépend que d'une interface (`domain::ports::UtilisateurRepositoryPort`), pas directement de PostgreSQL — même principe que le gateway unique (`RealGatewayRuntime`) côté frontend. Une seule implémentation en production, `PgUtilisateurRepository` (SQLx) ; il n'y a pas de mode mock exposé à l'exécution. Un second dépôt en mémoire (`FakeUtilisateurRepository`) existe, mais uniquement compilé en mode test (`#[cfg(test)]`) pour les tests HTTP de bout en bout — voir [Lancer les tests](#lancer-les-tests). |
 | **Argon2id** | Algorithme de hachage de mot de passe recommandé actuellement (résiste mieux aux attaques par GPU que bcrypt/MD5/SHA simple), calibré explicitement à 19 Mio, 2 itérations et 1 voie. Ses calculs CPU-bound sont exécutés dans le pool bloquant de Tokio afin de préserver les workers HTTP. |
 | **JWT (jsonwebtoken)** | Chaque requête porte un jeton signé, dont la signature et l'expiration sont vérifiées avant de relire l'utilisateur en base. Le rôle ne fait pas partie du jeton et doit toujours être lu depuis ce service; une suppression ou un changement de rôle prend donc effet immédiatement, sans stockage de session. |
-| **Docker multi-stage** | Une étape compile le binaire Rust avec `rust:1.88.0-slim-bookworm`, une autre installe la CLI Prisma avec `node:22-bookworm-slim` (Node.js 22, comme les autres services ; Prisma figé à la version exacte) et exécute `npx prisma generate` ; l'image finale embarque le binaire Rust compilé, Node.js et `prisma/` pour exécuter `npx prisma migrate deploy` au démarrage avant de lancer le binaire — même séquence que les microservices Node de l'équipe (voir [Installation et lancement](#installation-et-lancement)), adaptée à un runtime Rust. |
+| **Docker multi-stage** | Une étape compile le binaire Rust avec `rust:1.88.0-alpine` (binaire statique musl), une autre installe la CLI Prisma avec `node:22-alpine` (Node.js 22, comme les autres services ; Prisma figé à la version exacte) et exécute `npx prisma generate` ; l'image finale embarque le binaire Rust compilé, Node.js et `prisma/` pour exécuter `./node_modules/.bin/prisma migrate deploy` au démarrage avant de lancer le binaire — même séquence que les microservices Node de l'équipe (voir [Installation et lancement](#installation-et-lancement)), adaptée à un runtime Rust. |
 
 ## Architecture du service
 
@@ -252,7 +252,7 @@ migration Prisma en local, il faut en plus :
 > 1.85. Avec une version plus ancienne, `cargo build`/`cargo run` échoue
 > avec une erreur du type `feature 'edition2024' is required`. Le
 > `Dockerfile` utilise l'image précisément versionnée
-> `rust:1.88.0-slim-bookworm`, qui satisfait ce prérequis et rend les builds
+> `rust:1.88.0-alpine`, qui satisfait ce prérequis et rend les builds
 > Docker reproductibles. C'est seulement en local, hors Docker, que ta
 > version installée compte.
 
@@ -543,3 +543,11 @@ voir [Endpoints de l'API](#endpoints-de-lapi) — sans repasser par SQL.
   requise au moment de la compilation elle-même — seulement à
   l'exécution et pour les tests de `pg_utilisateur_repository` (voir
   [Lancer les tests](#lancer-les-tests)).
+
+## Image Auth renforcée — review 6078856455
+
+Rust est compilé statiquement avec musl (musl-dev dans le builder). Les stages Prisma et runtime utilisent Node 22 Alpine; le runtime applique les correctifs disponibles, conserve les fichiers applicatifs propriété de root et lisibles/exécutables par node et démarre sous node (UID 1000). npm/npx sont absents : le point d’entrée public local .bin/prisma, vérifié au build, applique les migrations avant exec du serveur. Une reconstruction avec --pull est nécessaire pour recevoir les nouvelles images de base.
+
+Validation sur base de test isolée : migrations appliquées, HTTP /health 200, /api/users/lookup sans JWT 401, UID 1000 et absence npm/npx. L’analyse Docker Scout complète ne détecte aucune vulnérabilité dans cette image au 9 octobre 2026; ce résultat daté ne garantit pas les versions futures. La couverture Rust reste 99,75 % des lignes hors main. Le CI construit maintenant l’image après les contrôles Rust.
+
+La couverture passe de 99,77 % (bilan initial) à 99,75 % dans la validation déjà effectuée du rôle identique; le seuil requis de 99 % est conservé et les scénarios PostgreSQL de changement réel et de rôle identique passent. Les lignes défensives restantes ne sont pas masquées.
