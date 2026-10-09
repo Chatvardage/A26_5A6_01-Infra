@@ -114,6 +114,17 @@ Validation : docker compose config, vérification des fichiers partagés et heal
 
 ## Sécurité et images — 9 octobre 2026
 
+### Nouvelle revue PR #21 — utilisateur Adminer
+
+- Adminer termine désormais son Dockerfile par `USER www-data`. Ses entrypoints inspectés ne réduisent pas les privilèges; PHP tournait réellement en root, contrairement à PostgreSQL/Redis. La validation du démarrage seul ne suffisait pas à établir son identité runtime.
+- CLI Prisma directe conservée : `build/index.js` correspond au champ `bin` de la version 6.19.3 figée et migrée réellement. Le lien `.bin` pointe sur le même fichier; toute mise à jour de Prisma exige déjà de revalider les images, sans stabilité absolue garantie par ce lien.
+- Scénario root puis opérateur conservé : hors root, uid/gid sont ceux du runner lui-même; sous root, les changer vérifie réellement l'accès sans privilège. Retirer ces options supprimerait cette garantie. Les deux contextes sont testés sous Linux.
+- Modes 0755/0644 des dérivés conservés : les UID des services non privilégiés ne coïncident pas forcément avec `LOCAL_UID`, propriétaire opérateur. 0700/0600 bloqueraient ces lecteurs; chaque conteneur ne voit que ses propres secrets et le parent hôte reste 0700.
+- Gosu : limite de l'image amont déjà explicitée dans le rapport avec rescan après mise à jour. Ne pas remplacer ce binaire de sécurité à la main ni ajouter une nouvelle CI de surveillance sans source corrigée validée. `build --pull` puis rescan restent requis lors des actualisations.
+- Régénération au prochain `compose up` conservée; la procédure README prescrit déjà la génération après changement de variables, sans rotation des secrets.
+
+Validation : image Adminer reconstruite avec `--pull`, conteneur isolé sous www-data (UID non nul), page HTTP 200 et génération du thème réussies, puis conteneur de test supprimé. Compose, 73 tests Infra, fichiers partagés et healthcheck passent; scénario root puis opérateur vérifié aussi en conteneur Node 22 Alpine. Les bases Auth/Message jetables restent migrées; aucun volume applicatif supprimé. Le conteneur Adminer habituel devra être reconstruit/recréé pour adopter ce Dockerfile.
+
 ### Revue PR #21 — permissions du bootstrap
 
 - Le bootstrap root rend désormais tous les sous-dossiers et fichiers dérivés à `LOCAL_UID:LOCAL_GID`, sans modifier les secrets ni les modes 0700/0755/0644. L'opérateur peut refaire la génération sans sudo; le test vérifie ce scénario après une première exécution root et confirme contenu et mode 0600 du fichier source au second passage.
