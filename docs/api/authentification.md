@@ -485,6 +485,11 @@ la modération se gère par serveur, dans Room-Service.
 
 **Réponse `200`** : l'objet utilisateur mis à jour.
 
+Si le rôle demandé est déjà celui du compte non-admin, la réponse contient son
+profil inchangé : `version_auth` et `modifie_le` sont conservés, ses jetons restent
+valides et aucune notification de révocation ne part. Une promotion réelle
+invalide ses jetons; une cible déjà admin reste interdite, même à rôle identique.
+
 **Erreurs** : `400` (valeur de rôle invalide), `403` si l'id cible un
 admin, `404` si l'id n'existe pas.
 
