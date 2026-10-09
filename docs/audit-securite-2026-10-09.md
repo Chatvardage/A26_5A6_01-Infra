@@ -87,3 +87,9 @@ Depuis Infra, utiliser les commandes documentées dans le README : bootstrap des
 ## Actualisation Auth — review 6078856455
 
 La ligne Auth/Trivy ci-dessus est le résultat historique de l’image Debian. La nouvelle image de la PR Auth #10 compile avec musl et utilise Node 22 Alpine mis à jour. Docker Scout, sans filtre de sévérité, de correctif ou d’image de base, y indexe 64 paquets et ne détecte aucune vulnérabilité le 9 octobre 2026. Les migrations réelles, la santé, le refus sans JWT et l’exécution sans root ont été vérifiés sur un conteneur temporaire et une base de test isolée; aucun volume applicatif n’a été supprimé. L’image en cours d’exploitation n’est pas remplacée par ces essais. Les autres lignes et limites de déploiement restent des résultats historiques à revérifier.
+
+Les bases et méthodes de Scout et Trivy diffèrent : leurs totaux ne doivent pas être comparés directement. Le tableau Trivy initial ci-dessus reste historique; une analyse de la même image avec Trivy complète les résultats ci-dessous. La couverture courante 99,75 % était déjà mesurée après le correctif de rôle identique avant cette projection publique; seuil 99 % et scénarios réels de révocation conservés.
+
+Rescan comparable : Trivy 0.75.0, image Auth Alpine du commit c518bb0, base de vulnérabilités actualisée le 9 octobre 2026 : 0 critiques, 0 élevées, 0 modérées, 0 faibles, 0 inconnues. Aucun filtre de sévérité ni de correctif. Ce résultat complète le tableau historique sans modifier les anciens constats.
+
+La commande directe Prisma du bilan initial décrit les images de ce premier scan; Auth utilise maintenant le point d’entrée déclaré .bin/prisma, conformément au guide actualisé. La couverture 99,75 % était déjà constatée avant c518bb0 : les valeurs 99,77 et 99,75 proviennent de deux validations successives, pas d’une régression de cette projection.
