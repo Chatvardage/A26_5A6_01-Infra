@@ -13,7 +13,10 @@ test('chaque service ne reçoit que ses secrets, sans rotation du fichier source
     fs.copyFileSync(path.resolve(__dirname, '../preparer-env-services.sh'), script);
     const source = 'NODE_ENV=production\nJWT_SECRET=jwt-secret\nAUTH_DB_PASSWORD=auth-secret\nMESSAGES_DB_PASSWORD=message-secret\nPOSTGRES_SUPERPASS=super-secret\nREDIS_PASSWORD=redis-secret\nDASHBOARD_SESSION_SECRET=admin-secret\nINTERNAL_SERVICE_TOKEN=internal-secret\nNON_AUTORISE=secret-inattendu\n';
     fs.writeFileSync(path.join(racine, '.env'), source);
-    const resultat = spawnSync('sh', [script], { encoding: 'utf8' });
+    const uid = process.getuid() || 1000;
+    const gid = process.getgid() || 1000;
+    const env = { ...process.env, LOCAL_UID: String(uid), LOCAL_GID: String(gid) };
+    const resultat = spawnSync('sh', [script], { encoding: 'utf8', env });
     assert.equal(resultat.status, 0, resultat.stderr);
     const lire = (service) => fs.readFileSync(path.join(racine, '.runtime-env', service, '.env'), 'utf8');
     assert.match(lire('auth'), /JWT_SECRET=jwt-secret/);
@@ -28,9 +31,21 @@ test('chaque service ne reçoit que ses secrets, sans rotation du fichier source
     }
     assert.equal(fs.readFileSync(path.join(racine, '.env'), 'utf8'), source);
     assert.equal(fs.statSync(path.join(racine, '.env')).mode & 0o777, 0o600);
-    const deuxieme = spawnSync('sh', [script], { encoding: 'utf8' });
+    // Après un bootstrap root, l'opérateur doit pouvoir régénérer ses
+    // fichiers sans sudo. Le parent temporaire appartient à cet opérateur.
+    if (process.getuid() === 0) fs.chownSync(racine, uid, gid);
+    const deuxieme = spawnSync('sh', [script], { encoding: 'utf8', env, uid, gid });
     assert.equal(deuxieme.status, 0, deuxieme.stderr);
     assert.equal(lire('auth').includes('JWT_SECRET=jwt-secret'), true);
+    assert.equal(fs.readFileSync(path.join(racine, '.env'), 'utf8'), source);
+    assert.equal(fs.statSync(path.join(racine, '.env')).mode & 0o777, 0o600);
+    for (const service of ['postgres', 'redis', 'auth', 'room', 'message', 'user-config', 'dashboard', 'serveur-api']) {
+      const dossier = path.join(racine, '.runtime-env', service);
+      for (const fichier of [dossier, path.join(dossier, '.env')]) {
+        assert.equal(fs.statSync(fichier).uid, uid);
+        assert.equal(fs.statSync(fichier).gid, gid);
+      }
+    }
   } finally {
     fs.rmSync(racine, { recursive: true, force: true });
   }

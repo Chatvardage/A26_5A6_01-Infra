@@ -247,6 +247,8 @@ Le [rapport détaillé](docs/audit-securite-2026-10-09.md) décrit les correctio
 
 `preparer-env-services.sh` dérive les seuls paramètres nécessaires à chaque service depuis le `.env` existant. Le dossier `.runtime-env` et le `.env` principal sont privés sur l'hôte; chaque conteneur voit seulement son sous-dossier en lecture seule. Si votre UID/GID Linux diffère de 1000, renseigner `LOCAL_UID` et `LOCAL_GID` avant le bootstrap. Ne pas régénérer les secrets d'une base existante.
 
+Après un bootstrap root, les sous-dossiers et fichiers dérivés appartiennent aussi à cet UID/GID : l'opérateur peut les régénérer sans sudo. Les éditions manuelles du fichier source doivent conserver le format `CLÉ=valeur`, sans `export` ni espace avant la clé.
+
 PostgreSQL 17, Redis 7.4 et Adminer 6.1.1 ont désormais des images locales construites depuis les images officielles et mises à jour avec `apk upgrade`. Utiliser `build --pull` pour reprendre les correctifs disponibles. Les images des services conservent les migrations Prisma au démarrage, avec le CLI local directement exécuté par Node (npm/npx supprimés au runtime). Auth utilise Debian Trixie pour son runtime; le compilateur Rust reste sur Bookworm.
 
 ### Rebuild et remise en service sans supprimer les données

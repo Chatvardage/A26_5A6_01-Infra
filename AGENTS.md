@@ -114,6 +114,16 @@ Validation : docker compose config, vérification des fichiers partagés et heal
 
 ## Sécurité et images — 9 octobre 2026
 
+### Revue PR #21 — permissions du bootstrap
+
+- Le bootstrap root rend désormais tous les sous-dossiers et fichiers dérivés à `LOCAL_UID:LOCAL_GID`, sans modifier les secrets ni les modes 0700/0755/0644. L'opérateur peut refaire la génération sans sudo; le test vérifie ce scénario après une première exécution root et confirme contenu et mode 0600 du fichier source au second passage.
+- `USER root` des images PostgreSQL/Redis conservé : les entrypoints doivent préparer les volumes et abaissent ensuite leurs privilèges. Forcer l'utilisateur avant cette préparation casserait le démarrage sur volume neuf. L'image Adminer a également été vérifiée au démarrage; aucun changement fondé sur un simple signalement de scanner.
+- `CORS_ORIGINS` conservé pour Auth : la configuration Rust et son routeur l'utilisent réellement. Le Gateway n'est pas une raison de retirer cette configuration commune, explicitement exigée dans ce fichier.
+- URL de révocation Message-Service conservée dans Compose : elle décrit le service du réseau interne, comme les autres URLs de cette topologie; un deuxième réplica exige une revue d'architecture, pas seulement une variable ajoutée.
+- Format CLÉ=valeur sans export ni espace avant la clé explicité dans le script; le générateur produit ce format. Pas d'élargissement implicite à d'autres grammaires de fichiers d'environnement.
+
+Validation de cette review : Compose, syntaxe shell, ShellCheck, 73 tests Infra, vérification des fichiers partagés et healthcheck de la stack passent. Le scénario root puis opérateur passe aussi dans un conteneur Node 22 Alpine. Les migrations Auth/Message ont été appliquées sur deux nouvelles bases de tests; les volumes et données applicatives existants sont conservés.
+
 - Les services runtime ne doivent plus monter tout le dépôt Infra : monter leur seul `.runtime-env/<service>` en lecture seule et le script d'entrée séparément. Le bootstrap est le seul service qui voit le `.env` principal.
 - Après les scripts de génération, exécuter `preparer-env-services.sh` sans régénérer les secrets existants; fournir `LOCAL_UID`/`LOCAL_GID` si l'opérateur n'utilise pas 1000:1000.
 - Les migrations en images finales invoquent directement `node node_modules/prisma/build/index.js migrate deploy`; `npx prisma ...` reste utilisable dans les environnements de développement/build, mais npm/npx sont absents au runtime.
