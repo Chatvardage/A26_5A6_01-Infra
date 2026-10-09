@@ -154,3 +154,9 @@ Validation de cette review : Compose, syntaxe shell, ShellCheck, 73 tests Infra,
 - Le tableau multi-stage distingue déjà generate pendant la construction et migrate au démarrage; aucun changement de commande ni suppression de npx au build.
 - Scinder les phrases de couverture et supprimer les rappels serait éditorial : ils permettent de lire indépendamment le guide, le bilan et les règles. Les valeurs sont cohérentes et le seuil inchangé.
 - Le rescan est déjà exigé avant déploiement (condition 4) et après reconstruction avec --pull; aucune cadence inventée sans service de déploiement configuré.
+
+### Review 6084732591 — erreurs de logout-others
+
+- Le contrat précise le 401 post-invalidation si le compte disparaît entre mutation et relecture, ainsi que la reconnexion classique possible après 500 lorsque le compte et le stockage sont disponibles.
+- Supprimer tout 401 ultérieur est écarté : AuthService::deconnecter_autres appelle trouver_par_id après invalider_sessions et renvoie NonAutorise si le compte n’est plus trouvé. Le 401 n’est donc pas uniquement une précondition.
+- Aucun séparateur supplémentaire : la phrase générale de révocation appartient déjà à la section logout-others et en est séparée par une ligne vide; son contenu reste correct.
